@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FutureYou — Log in</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange: #F26522;
+    --navy:   #1A3A5C;
+    --bg:     #0D1F33;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  /* subtle ambient glow */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(242,101,34,0.1) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 30%, rgba(46,95,138,0.18) 0%, transparent 55%);
+    pointer-events: none;
+  }
+
+  .card {
+    position: relative;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 20px;
+    padding: 44px 40px;
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-icon {
+    width: 38px; height: 38px;
+    background: var(--orange);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Lora', serif;
+    font-size: 18px; color: white;
+  }
+  .logo-text {
+    font-family: 'Lora', serif;
+    font-size: 20px; color: white;
+  }
+  .logo-text span { color: #F9915A; }
+
+  .heading { display: flex; flex-direction: column; gap: 6px; }
+  .heading h1 {
+    font-family: 'Lora', serif;
+    font-size: 26px; font-weight: 600;
+    color: white; line-height: 1.2;
+  }
+  .heading p { font-size: 14px; color: rgba(255,255,255,0.4); }
+
+  .fields { display: flex; flex-direction: column; gap: 14px; }
+
+  .field { display: flex; flex-direction: column; gap: 7px; }
+  .field label {
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.07em; text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+  }
+  .field input {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.11);
+    border-radius: 10px;
+    padding: 13px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; color: white;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+  .field input::placeholder { color: rgba(255,255,255,0.22); }
+  .field input:focus { border-color: var(--orange); }
+
+  .error-msg {
+    display: none;
+    font-size: 13px;
+    color: #F0997B;
+    background: rgba(242,101,34,0.1);
+    border: 1px solid rgba(242,101,34,0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    text-align: center;
+  }
+
+  .login-btn {
+    background: var(--orange);
+    color: white; border: none;
+    padding: 14px;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    width: 100%;
+  }
+  .login-btn:hover { background: #D4541A; }
+  .login-btn:active { transform: scale(0.99); }
+  .login-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .back-link {
+    text-align: center;
+    font-size: 13px;
+    color: rgba(255,255,255,0.3);
+  }
+  .back-link a {
+    color: rgba(255,255,255,0.5);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.2s;
+  }
+  .back-link a:hover { color: white; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">F</div>
+    <div class="logo-text">Future<span>You</span></div>
+  </div>
+
+  <div class="heading">
+    <h1>Welcome back</h1>
+    <p>Log in to see your future self</p>
+  </div>
+
+  <div class="fields">
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="your@email.com" autocomplete="email" />
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Your password" autocomplete="current-password" />
+    </div>
+  </div>
+
+  <div class="error-msg" id="error-msg"></div>
+
+  <button class="login-btn" id="login-btn" onclick="doLogin()">Log in</button>
+
+  <div class="back-link">
+    New here? <a href="futureyou_visual_novel.html">Start the journey</a>
+  </div>
+</div>
+
+<script>
+const API_BASE = 'http://localhost:5000';
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') doLogin();
+});
+
+async function doLogin() {
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const errorEl  = document.getElementById('error-msg');
+  const btn      = document.getElementById('login-btn');
+
+  errorEl.style.display = 'none';
+
+  if (!email || !password) {
+    errorEl.textContent = 'Please enter your email and password.';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  btn.textContent = 'Logging in...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      errorEl.textContent = data.error || 'Invalid email or password.';
+      errorEl.style.display = 'block';
+      btn.textContent = 'Log in';
+      btn.disabled = false;
+      return;
+    }
+
+    localStorage.setItem('futureyou_token', data.token);
+    localStorage.setItem('futureyou_user',  JSON.stringify(data.user));
+    window.location.href = 'futureyou_dashboard.html';
+
+  } catch (err) {
+    errorEl.textContent = 'Could not reach the server. Is the backend running?';
+    errorEl.style.display = 'block';
+    btn.textContent = 'Log in';
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>

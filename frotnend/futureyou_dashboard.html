@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FutureYou — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --orange:     #F26522;
+  --orange-dim: #F9915A;
+  --navy:       #1A3A5C;
+  --mid:        #2E5F8A;
+  --light-blue: #E8F4FD;
+  --bg:         #F4F6F9;
+  --surface:    #FFFFFF;
+  --border:     #E2E8F0;
+  --text:       #1A3A5C;
+  --muted:      #64829A;
+  --green:      #1A9E6B;
+  --green-bg:   #E8F7F1;
+  --amber:      #D97706;
+  --amber-bg:   #FEF3C7;
+  --sidebar-w:  240px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--navy);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+}
+
+.sidebar-logo {
+  padding: 28px 24px 24px;
+  display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.logo-icon {
+  width: 36px; height: 36px;
+  background: var(--orange);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Instrument Serif', serif;
+  font-size: 18px; color: white;
+}
+.logo-text {
+  font-family: 'Instrument Serif', serif;
+  font-size: 20px; color: white;
+}
+.logo-text span { color: var(--orange-dim); }
+
+.sidebar-nav {
+  flex: 1;
+  padding: 20px 12px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+
+.nav-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  padding: 16px 12px 8px;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: rgba(255,255,255,0.6);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-decoration: none;
+}
+.nav-item:hover { background: rgba(255,255,255,0.07); color: white; }
+.nav-item.active { background: rgba(242,101,34,0.2); color: white; }
+.nav-item.active .nav-dot { background: var(--orange); }
+.nav-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  flex-shrink: 0;
+}
+
+.sidebar-footer {
+  padding: 16px 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.user-pill {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+}
+.user-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--orange);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 500; color: white;
+  flex-shrink: 0;
+}
+.user-info { flex: 1; min-width: 0; }
+.user-name { font-size: 13px; color: white; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-score { font-size: 11px; color: rgba(255,255,255,0.4); }
+
+/* ── MAIN ── */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+}
+.topbar-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 20px; color: var(--text);
+}
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-date { font-size: 13px; color: var(--muted); }
+.complete-btn {
+  background: var(--orange);
+  color: white; border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.complete-btn:hover { background: #D4541A; }
+
+.content { padding: 32px; display: flex; flex-direction: column; gap: 28px; }
+
+/* ── READINESS BANNER ── */
+.readiness-banner {
+  background: var(--navy);
+  border-radius: 16px;
+  padding: 28px 32px;
+  display: flex; align-items: center; gap: 32px;
+  position: relative; overflow: hidden;
+}
+.readiness-banner::before {
+  content: '';
+  position: absolute;
+  right: -40px; top: -40px;
+  width: 220px; height: 220px;
+  border-radius: 50%;
+  background: rgba(242,101,34,0.12);
+}
+.readiness-banner::after {
+  content: '';
+  position: absolute;
+  right: 60px; bottom: -60px;
+  width: 160px; height: 160px;
+  border-radius: 50%;
+  background: rgba(46,95,138,0.3);
+}
+.readiness-left { flex: 1; z-index: 1; }
+.readiness-greeting {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 6px;
+}
+.readiness-headline {
+  font-family: 'Instrument Serif', serif;
+  font-size: 28px; color: white;
+  line-height: 1.25;
+  margin-bottom: 16px;
+}
+.readiness-headline span { color: var(--orange-dim); }
+
+.score-bar-wrap { display: flex; flex-direction: column; gap: 6px; max-width: 360px; }
+.score-bar-labels { display: flex; justify-content: space-between; font-size: 12px; color: rgba(255,255,255,0.4); }
+.score-bar-track {
+  height: 8px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.score-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--orange), var(--orange-dim));
+  transition: width 1s ease;
+}
+.score-caption { font-size: 12px; color: rgba(255,255,255,0.4); }
+
+.readiness-right { z-index: 1; text-align: right; }
+.big-score {
+  font-family: 'Instrument Serif', serif;
+  font-size: 64px; color: white; line-height: 1;
+}
+.big-score-label { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+.score-badge {
+  display: inline-block;
+  margin-top: 8px;
+  background: rgba(242,101,34,0.2);
+  color: var(--orange-dim);
+  font-size: 11px; font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(242,101,34,0.3);
+}
+
+/* ── STAT CARDS ROW ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 8px;
+  transition: box-shadow 0.2s;
+}
+.stat-card:hover { box-shadow: 0 4px 16px rgba(26,58,92,0.08); }
+
+.stat-label { font-size: 12px; color: var(--muted); font-weight: 500; }
+.stat-value {
+  font-family: 'Instrument Serif', serif;
+  font-size: 28px; color: var(--text); line-height: 1;
+}
+.stat-value.green { color: var(--green); }
+.stat-sub { font-size: 12px; color: var(--muted); }
+.stat-delta {
+  font-size: 12px; font-weight: 500;
+  display: inline-flex; align-items: center; gap: 3px;
+}
+.stat-delta.up { color: var(--green); }
+.stat-delta.neutral { color: var(--muted); }
+
+/* ── CHARTS SECTION ── */
+.charts-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+}
+.chart-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 20px;
+}
+.chart-title { font-size: 15px; font-weight: 500; color: var(--text); }
+.chart-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.chart-legend {
+  display: flex; gap: 16px;
+}
+.legend-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--muted);
+}
+.legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+}
+
+.chart-canvas-wrap { position: relative; }
+
+/* Allocation donut labels */
+.donut-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+.donut-center-value {
+  font-family: 'Instrument Serif', serif;
+  font-size: 22px; color: var(--text); line-height: 1;
+}
+.donut-center-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.allocation-list { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+.alloc-row {
+  display: flex; align-items: center; gap: 10px;
+}
+.alloc-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.alloc-label { font-size: 13px; color: var(--text); flex: 1; }
+.alloc-pct { font-size: 13px; font-weight: 500; color: var(--text); }
+.alloc-track {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.alloc-fill { height: 100%; border-radius: 2px; }
+
+/* ── FEATURE TILES ── */
+.tiles-section { display: flex; flex-direction: column; gap: 16px; }
+.tiles-label {
+  font-size: 12px; font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.tiles-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.feature-tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  display: flex; flex-direction: column; gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative; overflow: hidden;
+  text-decoration: none;
+}
+.feature-tile:hover {
+  border-color: var(--orange);
+  box-shadow: 0 4px 20px rgba(242,101,34,0.1);
+  transform: translateY(-1px);
+}
+.feature-tile::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  opacity: 0.06;
+  transition: opacity 0.2s;
+}
+.feature-tile:hover::after { opacity: 0.12; }
+.tile-game::after  { background: var(--orange); }
+.tile-chat::after  { background: var(--mid); }
+
+.tile-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+.tile-icon.orange { background: rgba(242,101,34,0.1); }
+.tile-icon.blue   { background: rgba(46,95,138,0.1); }
+
+.tile-title { font-size: 16px; font-weight: 500; color: var(--text); }
+.tile-desc  { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.tile-arrow {
+  font-size: 18px; color: var(--muted);
+  position: absolute; top: 24px; right: 24px;
+  transition: transform 0.2s, color 0.2s;
+}
+.feature-tile:hover .tile-arrow { transform: translate(2px, -2px); color: var(--orange); }
+
+/* ── BENEFITS SECTION ── */
+.benefits-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.benefits-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.benefits-title { font-size: 15px; font-weight: 500; color: var(--text); }
+.benefits-count {
+  background: var(--orange);
+  color: white;
+  font-size: 11px; font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.benefit-row {
+  display: flex; align-items: flex-start; gap: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.benefit-row:last-child { border-bottom: none; }
+.benefit-row:hover { background: var(--bg); }
+
+.benefit-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.benefit-icon.green  { background: var(--green-bg); }
+.benefit-icon.orange { background: rgba(242,101,34,0.1); }
+.benefit-icon.blue   { background: var(--light-blue); }
+.benefit-icon.amber  { background: var(--amber-bg); }
+
+.benefit-body { flex: 1; }
+.benefit-name { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+.benefit-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.benefit-tag {
+  font-size: 11px; font-weight: 500;
+  padding: 2px 8px; border-radius: 4px;
+  white-space: nowrap; flex-shrink: 0;
+  align-self: center;
+}
+.benefit-tag.eligible   { background: var(--green-bg); color: var(--green); }
+.benefit-tag.conditional { background: var(--amber-bg); color: var(--amber); }
+
+/* ── TAX SAVINGS HIGHLIGHT ── */
+.tax-highlight {
+  background: linear-gradient(135deg, #1A3A5C 0%, #2E5F8A 100%);
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px;
+}
+.tax-left { flex: 1; }
+.tax-label { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 4px; }
+.tax-value {
+  font-family: 'Instrument Serif', serif;
+  font-size: 32px; color: white; line-height: 1;
+}
+.tax-sub { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+.tax-breakdown {
+  display: flex; flex-direction: column; gap: 6px;
+  text-align: right;
+}
+.tax-line { font-size: 12px; color: rgba(255,255,255,0.5); }
+.tax-line span { color: rgba(255,255,255,0.85); font-weight: 500; }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.content > * {
+  animation: fadeUp 0.4s ease both;
+}
+.content > *:nth-child(1) { animation-delay: 0.05s; }
+.content > *:nth-child(2) { animation-delay: 0.1s; }
+.content > *:nth-child(3) { animation-delay: 0.15s; }
+.content > *:nth-child(4) { animation-delay: 0.2s; }
+.content > *:nth-child(5) { animation-delay: 0.25s; }
+.content > *:nth-child(6) { animation-delay: 0.3s; }
+
+@media (max-width: 1100px) {
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .charts-row { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; }
+  .content { padding: 20px; }
+  .tiles-row { grid-template-columns: 1fr; }
+  .readiness-banner { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">F</div>
+    <div class="logo-text">Future<span>You</span></div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-label">Main</div>
+    <a class="nav-item active" href="#">
+      <div class="nav-dot"></div> Dashboard
+    </a>
+    <a class="nav-item" href="futureyou_nps_account.html">
+      <div class="nav-dot"></div> My NPS Account
+    </a>
+    <a class="nav-item" href="#" onclick="comingSoon(\'Contributions\');return false;">
+      <div class="nav-dot"></div> Contributions
+    </a>
+    <a class="nav-item" href="#" onclick="comingSoon(\'Tax Benefits\');return false;">
+      <div class="nav-dot"></div> Tax Benefits
+    </a>
+
+    <div class="nav-label">Tools</div>
+    <a class="nav-item" href="#">
+      <div class="nav-dot"></div> Games &amp; Learn
+    </a>
+    <a class="nav-item" href="#">
+      <div class="nav-dot"></div> Talk to Future Self
+    </a>
+    <a class="nav-item" href="#" onclick="comingSoon(\'FAQ\');return false;">
+      <div class="nav-dot"></div> FAQ
+    </a>
+
+    <div class="nav-label">Account</div>
+    <a class="nav-item" href="#" onclick="comingSoon(\'Complete Profile\');return false;">
+      <div class="nav-dot"></div> Complete Profile
+    </a>
+    <a class="nav-item" href="#" onclick="comingSoon(\'Settings\');return false;">
+      <div class="nav-dot"></div> Settings
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="user-avatar" id="sidebar-avatar">A</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebar-name">Arjun Mehta</div>
+        <div class="user-score">Score: <span id="sidebar-score">420</span> / 900</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-title">Dashboard</div>
+    <div class="topbar-right">
+      <span class="topbar-date" id="topbar-date"></span>
+      <button class="complete-btn" onclick="comingSoon('Complete Profile')">
+        Complete Profile
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── READINESS BANNER ── -->
+    <div class="readiness-banner">
+      <div class="readiness-left">
+        <div class="readiness-greeting" id="banner-greeting">Good morning, Arjun</div>
+        <div class="readiness-headline">
+          Your retirement corpus<br>
+          could reach <span id="banner-corpus">₹2.4 Cr</span> by <span id="banner-year">2051</span>
+        </div>
+        <div class="score-bar-wrap">
+          <div class="score-bar-labels">
+            <span>NPS Readiness</span>
+            <span id="bar-score-label">420 / 900</span>
+          </div>
+          <div class="score-bar-track">
+            <div class="score-bar-fill" id="score-bar-fill" style="width: 0%"></div>
+          </div>
+          <div class="score-caption" id="score-caption">Getting started — keep contributing to level up</div>
+        </div>
+      </div>
+      <div class="readiness-right">
+        <div class="big-score" id="big-score">420</div>
+        <div class="big-score-label">NPS Readiness Score</div>
+        <div class="score-badge" id="score-badge">Beginner</div>
+      </div>
+    </div>
+
+    <!-- ── TAX HIGHLIGHT ── -->
+    <div class="tax-highlight">
+      <div class="tax-left">
+        <div class="tax-label">Estimated tax savings this year</div>
+        <div class="tax-value" id="tax-savings">₹46,800</div>
+        <div class="tax-sub">Based on your income bracket and current contributions</div>
+      </div>
+      <div class="tax-breakdown">
+        <div class="tax-line">80C deduction <span id="tax-80c">₹1,50,000</span></div>
+        <div class="tax-line">80CCD(1B) extra <span id="tax-80ccd">₹50,000</span></div>
+        <div class="tax-line">Total deduction <span id="tax-total">₹2,00,000</span></div>
+      </div>
+    </div>
+
+    <!-- ── STAT CARDS ── -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Current Corpus (Tier I)</div>
+        <div class="stat-value green" id="stat-corpus">₹0</div>
+        <div class="stat-sub" id="stat-corpus-sub">Start contributing to build your corpus</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Monthly Contribution</div>
+        <div class="stat-value" id="stat-contribution">₹2,000</div>
+        <div class="stat-delta up" id="stat-contrib-delta">&#8593; Increase to grow faster</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Projected at Retirement</div>
+        <div class="stat-value" id="stat-projected">₹2.4 Cr</div>
+        <div class="stat-sub" id="stat-proj-sub">At age 60 · 7% avg return</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Years to Retirement</div>
+        <div class="stat-value" id="stat-years">33</div>
+        <div class="stat-sub">Every year earlier = bigger corpus</div>
+      </div>
+    </div>
+
+    <!-- ── CHARTS ── -->
+    <div class="charts-row">
+
+      <!-- Corpus Growth Chart -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Projected corpus growth</div>
+            <div class="chart-sub">Based on current contribution &amp; 7% average NPS return</div>
+          </div>
+          <div class="chart-legend">
+            <div class="legend-item">
+              <div class="legend-dot" style="background:#F26522"></div> With NPS
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:#CBD5E0"></div> Without NPS
+            </div>
+          </div>
+        </div>
+        <div class="chart-canvas-wrap">
+          <canvas id="growthChart" height="220"></canvas>
+        </div>
+      </div>
+
+      <!-- Asset Allocation Donut -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Asset allocation</div>
+            <div class="chart-sub">Auto choice — moderate lifecycle</div>
+          </div>
+        </div>
+        <div class="chart-canvas-wrap" style="position:relative">
+          <canvas id="allocChart" height="180"></canvas>
+          <div class="donut-center">
+            <div class="donut-center-value">Auto</div>
+            <div class="donut-center-label">choice</div>
+          </div>
+        </div>
+        <div class="allocation-list">
+          <div class="alloc-row">
+            <div class="alloc-dot" style="background:#F26522"></div>
+            <div class="alloc-label">Equity (E)</div>
+            <div class="alloc-track"><div class="alloc-fill" style="width:50%;background:#F26522"></div></div>
+            <div class="alloc-pct">50%</div>
+          </div>
+          <div class="alloc-row">
+            <div class="alloc-dot" style="background:#2E5F8A"></div>
+            <div class="alloc-label">Corporate debt (C)</div>
+            <div class="alloc-track"><div class="alloc-fill" style="width:30%;background:#2E5F8A"></div></div>
+            <div class="alloc-pct">30%</div>
+          </div>
+          <div class="alloc-row">
+            <div class="alloc-dot" style="background:#9FB3C8"></div>
+            <div class="alloc-label">Govt securities (G)</div>
+            <div class="alloc-track"><div class="alloc-fill" style="width:20%;background:#9FB3C8"></div></div>
+            <div class="alloc-pct">20%</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── FEATURE TILES ── -->
+    <div class="tiles-section">
+      <div class="tiles-label">Tools &amp; Features</div>
+      <div class="tiles-row">
+        <a class="feature-tile tile-game" href="futureyou_games.html">
+          <div class="tile-icon orange">&#127918;</div>
+          <div class="tile-title">Games &amp; Learning</div>
+          <div class="tile-desc">Test your NPS knowledge with crosswords, quizzes, and two-truths-one-lie. Earn XP and climb the leaderboard.</div>
+          <div class="tile-arrow">&#8599;</div>
+        </a>
+        <a class="feature-tile tile-chat" href="futureyou_chat.html">
+          <div class="tile-icon blue">&#128172;</div>
+          <div class="tile-title">Talk to Future You</div>
+          <div class="tile-desc">Have a conversation with your 60-year-old self. Get personalised advice, life perspective, and financial guidance.</div>
+          <div class="tile-arrow">&#8599;</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- ── BENEFITS SECTION ── -->
+    <div class="benefits-section">
+      <div class="benefits-header">
+        <div class="benefits-title">My NPS Benefits</div>
+        <div class="benefits-count" id="benefits-count">8 eligible</div>
+      </div>
+
+      <div id="benefits-list">
+        <!-- populated by JS based on user data -->
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// NPS PROJECTION MODEL
+// Abstract class pattern — swap computeProjection() for a
+// better model later without touching any UI code.
+// ══════════════════════════════════════════════════════════════════
+const NPSModel = {
+  // Inputs: { age, monthlyContribution, currentCorpus, retirementAge }
+  // Returns: { corpusAtRetirement, yearlyCorpus[], taxSavings, yearsLeft }
+  computeProjection({ age, monthlyContribution, currentCorpus, retirementAge = 60 }) {
+    const ANNUAL_RETURN = 0.10;      // 10% NPS long-term avg (equity heavy)
+    const CONSERVATIVE   = 0.07;     // conservative fallback
+    const yearsLeft = retirementAge - age;
+
+    // Future value of current corpus
+    const fvExisting = currentCorpus * Math.pow(1 + ANNUAL_RETURN, yearsLeft);
+
+    // Future value of monthly SIP contributions
+    const monthlyRate = ANNUAL_RETURN / 12;
+    const months = yearsLeft * 12;
+    const fvSIP = monthlyContribution
+      * ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate)
+      * (1 + monthlyRate);
+
+    const corpusAtRetirement = Math.round(fvExisting + fvSIP);
+
+    // Yearly corpus for chart
+    const yearlyCorpus = [];
+    const yearlyNoNPS  = [];
+    for (let y = 0; y <= yearsLeft; y++) {
+      const fvE = currentCorpus * Math.pow(1 + ANNUAL_RETURN, y);
+      const m   = y * 12;
+      const mr  = ANNUAL_RETURN / 12;
+      const fvS = m === 0 ? 0 : monthlyContribution
+        * ((Math.pow(1 + mr, m) - 1) / mr) * (1 + mr);
+      yearlyCorpus.push(Math.round((fvE + fvS) / 1e5) / 10); // in lakhs
+      yearlyNoNPS.push(Math.round((currentCorpus * Math.pow(1.04, y)) / 1e5) / 10);
+    }
+
+    return {
+      corpusAtRetirement,
+      yearlyCorpus,
+      yearlyNoNPS,
+      yearsLeft,
+      retirementYear: new Date().getFullYear() + yearsLeft,
+    };
+  },
+
+  // Tax savings based on income bracket and contribution
+  computeTaxSavings({ annualIncome, monthlyContribution, taxRegime = 'old', existing80C = 0 }) {
+    // 80CCD(1B) — ₹50,000 extra, old regime only
+    const annual80CCD1B = taxRegime === 'old' ? Math.min(monthlyContribution * 12, 50000) : 0;
+
+    // How much 80C room is left after existing investments
+    const remaining80C  = taxRegime === 'old' ? Math.max(0, 150000 - existing80C) : 0;
+    const npsTowards80C = Math.min(monthlyContribution * 12, remaining80C);
+    const annual80C     = Math.min(existing80C + npsTowards80C, 150000);
+    const totalDeduction = annual80C + annual80CCD1B;
+
+    // Marginal tax rate
+    let rate = 0;
+    if (taxRegime === 'new') {
+      rate = annualIncome > 1500000 ? 0.30 : annualIncome > 1200000 ? 0.20 : annualIncome > 900000 ? 0.15 : annualIncome > 600000 ? 0.10 : annualIncome > 300000 ? 0.05 : 0;
+    } else {
+      rate = annualIncome > 1500000 ? 0.30 : annualIncome > 1000000 ? 0.20 : annualIncome > 500000 ? 0.20 : 0.05;
+    }
+
+    const savings = Math.round(totalDeduction * rate);
+    return { savings, totalDeduction, annual80C, annual80CCD1B, rate, taxRegime };
+  },
+};
+
+// ══════════════════════════════════════════════════════════════════
+// BENEFITS RULE ENGINE
+// Each rule checks userData and returns eligible/conditional/null
+// Add new benefits here without touching UI code.
+// ══════════════════════════════════════════════════════════════════
+const BENEFIT_RULES = [
+  {
+    id: 'tax_80ccd1b',
+    name: 'Extra ₹50,000 deduction under 80CCD(1B)',
+    desc: 'Exclusive NPS benefit on top of your ₹1.5L 80C limit. Most people miss this.',
+    icon: '&#9733;', iconClass: 'green',
+    check: (u) => u.employment.type !== 'student' ? 'eligible' : 'conditional',
+  },
+  {
+    id: 'tax_80c',
+    name: '₹1,50,000 deduction under Section 80C',
+    desc: 'NPS Tier I contributions count towards your 80C limit along with PPF, ELSS etc.',
+    icon: '&#128200;', iconClass: 'green',
+    check: (u) => u.employment.type !== 'student' ? 'eligible' : null,
+  },
+  {
+    id: 'employer_match',
+    name: 'Employer NPS contribution (tax-free)',
+    desc: 'If your employer contributes to NPS, up to 10% of basic salary is tax-free for you.',
+    icon: '&#127970;', iconClass: 'blue',
+    check: (u) => ['private', 'govt'].includes(u.employment.type) ? 'eligible' : null,
+  },
+  {
+    id: 'govt_80ccd1',
+    name: 'Govt employee additional deduction 80CCD(1)',
+    desc: 'Central govt employees get 14% of basic+DA as employer contribution, fully deductible.',
+    icon: '&#127963;', iconClass: 'blue',
+    check: (u) => u.employment.type === 'govt' ? 'eligible' : null,
+  },
+  {
+    id: 'partial_withdrawal',
+    name: 'Partial withdrawal after 3 years',
+    desc: 'Withdraw up to 25% of your own contributions for education, marriage, medical emergencies.',
+    icon: '&#128197;', iconClass: 'orange',
+    check: () => 'eligible',
+  },
+  {
+    id: 'annuity_tax',
+    name: 'Tax-free lump sum at retirement',
+    desc: '60% of corpus at retirement is tax-free. Only the 40% used for annuity purchase is taxable.',
+    icon: '&#128184;', iconClass: 'green',
+    check: () => 'eligible',
+  },
+  {
+    id: 'tier2_flexible',
+    name: 'Tier II — flexible savings account',
+    desc: 'Open a Tier II account with no lock-in for flexible withdrawals alongside your Tier I.',
+    icon: '&#128179;', iconClass: 'orange',
+    check: (u) => u.nps.has_account ? 'eligible' : 'conditional',
+  },
+  {
+    id: 'low_cost',
+    name: 'Lowest fund management charges',
+    desc: 'NPS charges just 0.09% p.a. — the cheapest pension product in India by a wide margin.',
+    icon: '&#128200;', iconClass: 'amber',
+    check: () => 'eligible',
+  },
+  {
+    id: 'self_employed_deduction',
+    name: 'Self-employed 80CCD(1) — 20% of gross income',
+    desc: 'Self-employed individuals can deduct up to 20% of gross income under NPS 80CCD(1).',
+    icon: '&#128188;', iconClass: 'orange',
+    check: (u) => u.employment.type === 'self' ? 'eligible' : null,
+  },
+];
+
+// ══════════════════════════════════════════════════════════════════
+// USER DATA — pulled from localStorage (set by visual novel)
+// Falls back to demo data if not logged in
+// ══════════════════════════════════════════════════════════════════
+const API_BASE = 'http://localhost:5000';
+
+async function loadUserData() {
+  const token = localStorage.getItem('futureyou_token');
+
+  if (token) {
+    try {
+      const res = await fetch(`${API_BASE}/api/users/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const user = await res.json();
+        // Keep localStorage in sync for offline fallback
+        localStorage.setItem('futureyou_user', JSON.stringify(user));
+        return user;
+      }
+      // Token expired — clear it and fall through to localStorage
+      if (res.status === 401) {
+        localStorage.removeItem('futureyou_token');
+      }
+    } catch (err) {
+      console.warn('API unreachable, using cached data:', err.message);
+    }
+  }
+
+  // Fallback 1 — localStorage (set by visual novel)
+  try {
+    const stored = localStorage.getItem('futureyou_user');
+    if (stored) return JSON.parse(stored);
+  } catch (e) {}
+
+  // Fallback 2 — demo data so dashboard is never blank
+  return {
+    name: 'Arjun Mehta',
+    age: 27,
+    employment: { type: 'private', income_range: '50k-1L', monthly_income_exact: 75000 },
+    nps: { has_account: false, monthly_contribution: 2000, tier1_balance: 0 },
+    goals: { retirement_age_target: 60, retirement_lifestyle: 'travel' },
+    gamification: { nps_readiness_score: 420 },
+    onboarding: { nps_knowledge_level: 'heard', tax_fact_known: false },
+  };
+}
+
+// Income range midpoints for tax calculations
+const INCOME_MAP = {
+  'under25k': 240000, '25k-50k': 450000, '50k-1L': 900000,
+  '1L-2L': 1800000, 'above2L': 3000000,
+};
+
+// Suggested minimum NPS contribution per income range (~5% of monthly income)
+const CONTRIB_DEFAULTS = {
+  'under25k': 1000, '25k-50k': 2000, '50k-1L': 4000,
+  '1L-2L': 8000, 'above2L': 15000,
+};
+
+// ══════════════════════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════════════════════
+async function renderDashboard() {
+  const user = await loadUserData();
+  const score = user.gamification?.nps_readiness_score || 300;
+
+  // ── Input guards: never let bad data reach the model ──
+  const age           = Math.max(18, Math.min(59, parseInt(user.age) || 25));
+  const retirementAge = Math.max(age + 1, parseInt(user.goals?.retirement_age_target) || 60);
+  const currentCorpus = Math.max(0, parseInt(user.nps?.tier1_balance) || 0);
+
+  // Use monthly_income_exact (midpoint from novel) then fall back to income map
+  const monthlyIncomeExact = parseInt(user.employment?.monthly_income_exact) || 0;
+  const annualIncome = monthlyIncomeExact > 0
+    ? monthlyIncomeExact * 12
+    : (INCOME_MAP[user.employment?.income_range] || 600000);
+
+  // Use real contribution if set, otherwise derive a sensible default from income
+  const realContrib    = parseInt(user.nps?.monthly_contribution) || 0;
+  const defaultContrib = CONTRIB_DEFAULTS[user.employment?.income_range] ||
+    Math.round((monthlyIncomeExact || 50000) * 0.05 / 500) * 500; // 5% of income, rounded to ₹500
+  const monthlyContrib = realContrib > 0 ? realContrib : defaultContrib;
+  const isEstimated    = realContrib === 0;
+
+  // Tax inputs from extended novel data
+  const taxRegime   = user.employment?.tax_regime || user.onboarding?.tax_regime || 'old';
+  const existing80C = parseInt(user.employment?.existing_80c_investments) || 0;
+
+  // Projection
+  const proj = NPSModel.computeProjection({ age, monthlyContribution: monthlyContrib, currentCorpus, retirementAge });
+  const tax  = NPSModel.computeTaxSavings({ annualIncome, monthlyContribution: monthlyContrib, taxRegime, existing80C });
+
+  const fmt = (n) => n >= 1e7
+    ? '₹' + (n / 1e7).toFixed(1) + ' Cr'
+    : n >= 1e5
+    ? '₹' + (n / 1e5).toFixed(1) + ' L'
+    : '₹' + n.toLocaleString('en-IN');
+
+  // Topbar date
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  // Banner
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('banner-greeting').textContent = `${greeting}, ${user.name?.split(' ')[0] || 'there'}`;
+  document.getElementById('banner-corpus').textContent = fmt(proj.corpusAtRetirement);
+  document.getElementById('banner-year').textContent = proj.retirementYear;
+
+  // Score bar
+  const scorePct = Math.round(((score - 300) / 600) * 100);
+  setTimeout(() => {
+    document.getElementById('score-bar-fill').style.width = scorePct + '%';
+  }, 300);
+  document.getElementById('bar-score-label').textContent = `${score} / 900`;
+  document.getElementById('big-score').textContent = score;
+  document.getElementById('sidebar-score').textContent = score;
+
+  const band = score < 450 ? ['Beginner', 'Keep contributing to level up']
+    : score < 600 ? ['Building momentum', 'You\'re on track — stay consistent']
+    : score < 750 ? ['On track', 'Great discipline — keep it up']
+    : ['NPS Champion', 'Outstanding retirement planning'];
+  document.getElementById('score-badge').textContent = band[0];
+  document.getElementById('score-caption').textContent = band[1];
+
+  // Sidebar
+  document.getElementById('sidebar-name').textContent = user.name || 'User';
+  document.getElementById('sidebar-avatar').textContent = (user.name || 'U')[0].toUpperCase();
+
+  // Stat cards
+  document.getElementById('stat-corpus').textContent = fmt(currentCorpus);
+  document.getElementById('stat-corpus-sub').textContent = currentCorpus > 0
+    ? `Tier I balance · updated today` : 'Link your PRAN to see balance';
+  document.getElementById('stat-contribution').textContent = fmt(monthlyContrib) + '/mo';
+  document.getElementById('stat-contrib-delta').textContent = isEstimated
+    ? '~ Estimated — update in NPS Account' : '↑ Increase to grow faster';
+  document.getElementById('stat-contrib-delta').className = isEstimated ? 'stat-delta neutral' : 'stat-delta up';
+  document.getElementById('stat-projected').textContent = fmt(proj.corpusAtRetirement);
+  document.getElementById('stat-proj-sub').textContent = `At age ${retirementAge} · 10% avg return` + (isEstimated ? ' · estimated' : '');
+  document.getElementById('stat-years').textContent = proj.yearsLeft;
+
+  // Tax
+  document.getElementById('tax-savings').textContent = fmt(tax.savings);
+  document.getElementById('tax-80c').textContent = fmt(tax.annual80C);
+  document.getElementById('tax-80ccd').textContent = fmt(tax.annual80CCD1B);
+  document.getElementById('tax-total').textContent = fmt(tax.totalDeduction);
+
+  // Charts
+  renderGrowthChart(proj, age);
+  renderAllocChart();
+
+  // Benefits
+  renderBenefits(user);
+}
+
+function renderGrowthChart(proj, startAge) {
+  const labels = proj.yearlyCorpus.map((_, i) => startAge + i);
+  const ctx = document.getElementById('growthChart').getContext('2d');
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'With NPS',
+          data: proj.yearlyCorpus,
+          borderColor: '#F26522',
+          backgroundColor: 'rgba(242,101,34,0.08)',
+          borderWidth: 2.5,
+          pointRadius: 0,
+          fill: true,
+          tension: 0.4,
+        },
+        {
+          label: 'Without NPS',
+          data: proj.yearlyNoNPS,
+          borderColor: '#CBD5E0',
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: false,
+          tension: 0.4,
+          borderDash: [5, 4],
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1A3A5C',
+          titleColor: 'rgba(255,255,255,0.6)',
+          bodyColor: '#fff',
+          padding: 12,
+          callbacks: {
+            label: (ctx) => ` ${ctx.dataset.label}: ₹${ctx.parsed.y.toFixed(1)}L`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: '#9FB3C8', font: { size: 11 }, maxTicksLimit: 8 },
+          border: { display: false },
+        },
+        y: {
+          grid: { color: '#F0F4F8' },
+          ticks: {
+            color: '#9FB3C8', font: { size: 11 },
+            callback: (v) => '₹' + v + 'L',
+          },
+          border: { display: false },
+        },
+      },
+    },
+  });
+}
+
+function renderAllocChart() {
+  const ctx = document.getElementById('allocChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Equity (E)', 'Corporate debt (C)', 'Govt securities (G)'],
+      datasets: [{
+        data: [50, 30, 20],
+        backgroundColor: ['#F26522', '#2E5F8A', '#9FB3C8'],
+        borderWidth: 0,
+        hoverOffset: 4,
+      }],
+    },
+    options: {
+      responsive: true,
+      cutout: '68%',
+      plugins: { legend: { display: false }, tooltip: {
+        backgroundColor: '#1A3A5C',
+        bodyColor: '#fff',
+        padding: 10,
+      }},
+    },
+  });
+}
+
+function renderBenefits(user) {
+  const list = document.getElementById('benefits-list');
+  const eligible = BENEFIT_RULES
+    .map(r => ({ ...r, status: r.check(user) }))
+    .filter(r => r.status !== null);
+
+  document.getElementById('benefits-count').textContent = eligible.filter(r => r.status === 'eligible').length + ' eligible';
+
+  list.innerHTML = eligible.map(b => `
+    <div class="benefit-row">
+      <div class="benefit-icon ${b.iconClass}">${b.icon}</div>
+      <div class="benefit-body">
+        <div class="benefit-name">${b.name}</div>
+        <div class="benefit-desc">${b.desc}</div>
+      </div>
+      <div class="benefit-tag ${b.status}">${b.status === 'eligible' ? 'Eligible' : 'Conditional'}</div>
+    </div>
+  `).join('');
+}
+
+renderDashboard();
+</script>
+</body>
+</html>

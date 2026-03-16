@@ -1,0 +1,1335 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>FutureYou</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --nps-orange: #f26522;
+                --nps-dark: #1a3a5c;
+                --nps-mid: #2e5f8a;
+                --nps-light: #e8f4fd;
+                --nps-accent: #f7941d;
+                --text-primary: #1a3a5c;
+                --text-muted: #5a7a96;
+                --bg: #0d1f33;
+                --bubble-bg: rgba(255, 255, 255, 0.97);
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: "DM Sans", sans-serif;
+                background: var(--bg);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+            }
+
+            /* ── LANDING SCREEN ── */
+            #landing {
+                position: fixed;
+                inset: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                background: var(--bg);
+                z-index: 100;
+                transition: opacity 0.8s ease;
+            }
+            #landing.hide {
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            .landing-bg {
+                position: absolute;
+                inset: 0;
+                background:
+                    radial-gradient(
+                        ellipse at 30% 60%,
+                        rgba(242, 101, 34, 0.15) 0%,
+                        transparent 60%
+                    ),
+                    radial-gradient(
+                        ellipse at 80% 20%,
+                        rgba(46, 95, 138, 0.25) 0%,
+                        transparent 55%
+                    );
+            }
+
+            .landing-content {
+                position: relative;
+                z-index: 2;
+                text-align: center;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 12px;
+                padding: 90px 24px;
+            }
+
+            .logo-mark {
+                width: 64px;
+                height: 64px;
+                background: var(--nps-orange);
+                border-radius: 18px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: "Lora", serif;
+                font-size: 28px;
+                font-weight: 600;
+                color: white;
+                margin-bottom: 8px;
+            }
+
+            .landing-title {
+                font-family: "Lora", serif;
+                font-size: clamp(32px, 6vw, 52px);
+                font-weight: 600;
+                color: white;
+                letter-spacing: -0.5px;
+                line-height: 1.15;
+            }
+            .landing-title span {
+                color: var(--nps-orange);
+            }
+
+            .landing-sub {
+                font-size: 15px;
+                color: rgba(255, 255, 255, 0.55);
+                max-width: 320px;
+                line-height: 1.6;
+                font-weight: 300;
+            }
+
+            .camera-wrap {
+                position: relative;
+                width: 200px;
+                height: 200px;
+                border-radius: 50%;
+                overflow: hidden;
+                border: 2px solid rgba(242, 101, 34, 0.5);
+                background: rgba(255, 255, 255, 0.04);
+                flex-shrink: 0;
+            }
+            .camera-wrap.has-photo {
+                border-color: var(--nps-orange);
+            }
+
+            #camera-video,
+            #camera-canvas {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                border-radius: 50%;
+            }
+            #camera-canvas {
+                display: none;
+            }
+
+            .camera-hint {
+                position: absolute;
+                inset: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                pointer-events: none;
+            }
+            .camera-hint-icon {
+                font-size: 28px;
+                opacity: 0.5;
+            }
+            .camera-hint span {
+                font-size: 11px;
+                color: rgba(255, 255, 255, 0.4);
+                text-align: center;
+                line-height: 1.4;
+            }
+
+            /* countdown ring overlay */
+            .countdown-ring {
+                position: absolute;
+                inset: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: "Lora", serif;
+                font-size: 56px;
+                font-weight: 600;
+                color: white;
+                background: rgba(13, 31, 51, 0.5);
+                border-radius: 50%;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.2s;
+            }
+            .countdown-ring.show {
+                opacity: 1;
+            }
+
+            .camera-controls {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+                width: 100%;
+            }
+
+            .capture-btn {
+                background: var(--nps-orange);
+                color: white;
+                border: none;
+                padding: 12px 32px;
+                border-radius: 50px;
+                font-family: "DM Sans", sans-serif;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .capture-btn:hover {
+                background: var(--nps-accent);
+            }
+            .capture-btn:disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
+            }
+
+            .retake-btn {
+                background: none;
+                border: none;
+                color: rgba(255, 255, 255, 0.35);
+                font-family: "DM Sans", sans-serif;
+                font-size: 13px;
+                cursor: pointer;
+                text-decoration: underline;
+                text-underline-offset: 3px;
+                display: none;
+            }
+            .retake-btn:hover {
+                color: rgba(255, 255, 255, 0.65);
+            }
+            .retake-btn.show {
+                display: block;
+            }
+
+            .cam-status {
+                font-size: 12px;
+                color: rgba(255, 255, 255, 0.35);
+                text-align: center;
+            }
+            .cam-status.error {
+                color: #f0997b;
+            }
+
+            #photo-input {
+                display: none;
+            }
+
+            .name-input-wrap {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                width: 100%;
+                max-width: 280px;
+            }
+            .name-input-wrap label {
+                font-size: 12px;
+                color: rgba(255, 255, 255, 0.4);
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            }
+            .name-input-wrap input {
+                background: rgba(255, 255, 255, 0.07);
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                border-radius: 10px;
+                padding: 12px 16px;
+                font-family: "DM Sans", sans-serif;
+                font-size: 15px;
+                color: white;
+                outline: none;
+                transition: border-color 0.2s;
+                width: 100%;
+            }
+            .name-input-wrap input::placeholder {
+                color: rgba(255, 255, 255, 0.25);
+            }
+            .name-input-wrap input:focus {
+                border-color: var(--nps-orange);
+            }
+
+            .begin-btn {
+                background: var(--nps-orange);
+                color: white;
+                border: none;
+                padding: 14px 40px;
+                border-radius: 50px;
+                font-family: "DM Sans", sans-serif;
+                font-size: 15px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+                letter-spacing: 0.02em;
+            }
+            .begin-btn:hover {
+                background: var(--nps-accent);
+                transform: translateY(-1px);
+            }
+            .begin-btn:active {
+                transform: translateY(0);
+            }
+            .begin-btn:disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+            .skip-btn {
+                background: none;
+                border: none;
+                color: rgba(255, 255, 255, 0.35);
+                font-family: "DM Sans", sans-serif;
+                font-size: 13px;
+                cursor: pointer;
+                transition: color 0.2s;
+                text-decoration: underline;
+                text-underline-offset: 3px;
+            }
+            .skip-btn:hover {
+                color: rgba(255, 255, 255, 0.65);
+            }
+
+            /* ── NOVEL SCREEN ── */
+            #novel {
+                position: fixed;
+                inset: 0;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.8s ease;
+                display: flex;
+                flex-direction: column;
+            }
+            #novel.show {
+                opacity: 1;
+                pointer-events: all;
+            }
+
+            /* Background layer */
+            .bg-layer {
+                position: absolute;
+                inset: 0;
+                background-size: cover;
+                background-position: center;
+                transition: opacity 0.5s ease;
+            }
+            .bg-layer::after {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(
+                    to top,
+                    rgba(13, 31, 51, 0.92) 0%,
+                    rgba(13, 31, 51, 0.5) 50%,
+                    rgba(13, 31, 51, 0.3) 100%
+                );
+            }
+
+            /* Avatar layer */
+            .avatar-layer {
+                position: absolute;
+                bottom: 220px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: min(340px, 65vw);
+                height: min(400px, 55vh);
+                transition: opacity 0.5s ease;
+                display: flex;
+                align-items: flex-end;
+                justify-content: center;
+            }
+            .avatar-layer img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                object-position: bottom;
+                filter: drop-shadow(0 8px 32px rgba(0, 0, 0, 0.5));
+            }
+
+            /* Progress dots */
+            .progress-dots {
+                position: absolute;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                display: flex;
+                gap: 6px;
+                z-index: 10;
+            }
+            .dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.2);
+                transition: all 0.3s;
+            }
+            .dot.active {
+                background: var(--nps-orange);
+                width: 20px;
+                border-radius: 3px;
+            }
+            .dot.done {
+                background: rgba(255, 255, 255, 0.45);
+            }
+
+            /* Dialogue box */
+            .dialogue-box {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: var(--bubble-bg);
+                border-radius: 24px 24px 0 0;
+                padding: 28px 28px 32px;
+                min-height: 200px;
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+                transition: opacity 0.4s ease;
+                box-shadow: 0 -4px 40px rgba(0, 0, 0, 0.3);
+            }
+
+            .speaker-tag {
+                font-size: 11px;
+                font-weight: 500;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: var(--nps-orange);
+            }
+
+            .dialogue-text {
+                font-family: "Lora", serif;
+                font-size: clamp(15px, 2.5vw, 17px);
+                color: var(--text-primary);
+                line-height: 1.7;
+                min-height: 56px;
+            }
+
+            /* Input scene */
+            .input-group {
+                display: flex;
+                gap: 10px;
+                align-items: stretch;
+            }
+            .scene-input {
+                flex: 1;
+                background: var(--nps-light);
+                border: 1.5px solid rgba(46, 95, 138, 0.2);
+                border-radius: 10px;
+                padding: 11px 16px;
+                font-family: "DM Sans", sans-serif;
+                font-size: 15px;
+                color: var(--text-primary);
+                outline: none;
+                transition: border-color 0.2s;
+            }
+            .scene-input:focus {
+                border-color: var(--nps-mid);
+            }
+            .scene-input::placeholder {
+                color: var(--text-muted);
+                opacity: 0.6;
+            }
+
+            .scene-input[type="range"] {
+                padding: 8px 0;
+                cursor: pointer;
+                accent-color: var(--nps-orange);
+            }
+
+            .submit-btn {
+                background: var(--nps-dark);
+                color: white;
+                border: none;
+                padding: 11px 20px;
+                border-radius: 10px;
+                font-family: "DM Sans", sans-serif;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: background 0.2s;
+                white-space: nowrap;
+            }
+            .submit-btn:hover {
+                background: var(--nps-mid);
+            }
+
+            /* MCQ */
+            .mcq-options {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .mcq-opt {
+                background: var(--nps-light);
+                border: 1.5px solid rgba(46, 95, 138, 0.15);
+                border-radius: 10px;
+                padding: 11px 16px;
+                font-size: 14px;
+                color: var(--text-primary);
+                cursor: pointer;
+                transition: all 0.2s;
+                text-align: left;
+                font-family: "DM Sans", sans-serif;
+            }
+            .mcq-opt:hover {
+                border-color: var(--nps-mid);
+                background: rgba(46, 95, 138, 0.08);
+            }
+            .mcq-opt.selected {
+                border-color: var(--nps-orange);
+                background: rgba(242, 101, 34, 0.08);
+                color: var(--nps-dark);
+                font-weight: 500;
+            }
+            .mcq-opt.correct {
+                border-color: #27ae60;
+                background: rgba(39, 174, 96, 0.08);
+            }
+            .mcq-opt.wrong {
+                border-color: #e74c3c;
+                background: rgba(231, 76, 60, 0.06);
+            }
+
+            /* Next button */
+            .next-row {
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+                gap: 12px;
+                margin-top: 4px;
+            }
+            .tap-hint {
+                font-size: 12px;
+                color: var(--text-muted);
+                animation: pulse 2s infinite;
+            }
+            @keyframes pulse {
+                0%,
+                100% {
+                    opacity: 0.5;
+                }
+                50% {
+                    opacity: 1;
+                }
+            }
+
+            .next-btn {
+                background: var(--nps-orange);
+                color: white;
+                border: none;
+                padding: 10px 24px;
+                border-radius: 50px;
+                font-family: "DM Sans", sans-serif;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .next-btn:hover {
+                background: var(--nps-accent);
+            }
+            .next-btn svg {
+                width: 14px;
+                height: 14px;
+            }
+
+            /* Fade overlay for transitions */
+            .fade-overlay {
+                position: absolute;
+                inset: 0;
+                background: var(--bg);
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.35s ease;
+                z-index: 20;
+            }
+            .fade-overlay.active {
+                opacity: 1;
+            }
+
+            /* Range label */
+            .range-wrap {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                width: 100%;
+            }
+            .range-val {
+                font-size: 13px;
+                color: var(--nps-mid);
+                font-weight: 500;
+            }
+
+            select.scene-input {
+                appearance: none;
+                cursor: pointer;
+            }
+
+            @media (max-width: 480px) {
+                .avatar-layer {
+                    bottom: 210px;
+                }
+                .dialogue-box {
+                    padding: 22px 20px 28px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <!-- ══════════════ LANDING ══════════════ -->
+        <div id="landing">
+            <div class="landing-bg"></div>
+            <div class="landing-content">
+                <div class="logo-mark">F</div>
+                <div>
+                    <div class="landing-title">Future<span>You</span></div>
+                </div>
+                <p class="landing-sub">
+                    Meet the version of yourself that lived through the choices
+                    you're about to make.
+                </p>
+
+                <div class="camera-wrap" id="camera-wrap">
+                    <video id="camera-video" autoplay playsinline muted></video>
+                    <canvas id="camera-canvas"></canvas>
+                    <div class="camera-hint" id="camera-hint">
+                        <span class="camera-hint-icon">&#128247;</span>
+                        <span>Starting<br />camera...</span>
+                    </div>
+                    <div class="countdown-ring" id="countdown-ring"></div>
+                </div>
+
+                <div class="camera-controls">
+                    <div class="cam-status" id="cam-status">
+                        Position your face in the circle
+                    </div>
+                    <button
+                        class="capture-btn"
+                        id="capture-btn"
+                        onclick="capturePhoto()"
+                        disabled
+                    >
+                        Take photo
+                    </button>
+                    <button
+                        class="retake-btn"
+                        id="retake-btn"
+                        onclick="retakePhoto()"
+                    >
+                        Retake
+                    </button>
+                </div>
+
+                <input type="file" id="photo-input" accept="image/*" />
+
+                <div class="name-input-wrap">
+                    <label>Your name</label>
+                    <input
+                        type="text"
+                        id="user-name"
+                        placeholder="What do people call you?"
+                        maxlength="30"
+                    />
+                </div>
+
+                <button
+                    class="begin-btn"
+                    id="begin-btn"
+                    onclick="beginJourney()"
+                >
+                    Begin the journey
+                </button>
+
+                <a href="futureyou_login.html" class="skip-btn"
+                    >Already have an account? Log in</a
+                >
+            </div>
+        </div>
+
+        <!-- ══════════════ NOVEL ══════════════ -->
+        <div id="novel">
+            <div class="fade-overlay" id="fade-overlay"></div>
+
+            <div class="bg-layer" id="bg-layer"></div>
+            <div class="avatar-layer" id="avatar-layer">
+                <img id="avatar-img" src="" alt="Your future self" />
+            </div>
+
+            <div class="progress-dots" id="progress-dots"></div>
+
+            <div class="dialogue-box" id="dialogue-box">
+                <div class="speaker-tag" id="speaker-tag">Future You</div>
+                <div class="dialogue-text" id="dialogue-text"></div>
+                <div id="scene-input-area"></div>
+                <div class="next-row">
+                    <span class="tap-hint" id="tap-hint">tap to continue</span>
+                    <button
+                        class="next-btn"
+                        id="next-btn"
+                        onclick="advanceScene()"
+                    >
+                        Next
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path d="M5 12h14M12 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script src="futureyou_script.js"></script>
+        <script>
+            // ══════════════════════════════════════════════════════════════════
+            // FUTUREYOU — NOVEL ENGINE
+            // Handles camera, scene rendering, transitions, and registration.
+            // Script content (scenes, dialogue) lives in futureyou_script.js
+            // ══════════════════════════════════════════════════════════════════
+
+            const API_BASE = "http://localhost:5000";
+
+            // ── State ──────────────────────────────────────────────────────────
+            const userData = {};
+            let userName = "";
+            let generatedUserId = null;
+            let generatedAvatars = null;
+            let capturedBlob = null;
+            let cameraStream = null;
+            let scenes = [];
+            let current = 0;
+            let isTransitioning = false;
+            let inputAnswered = false;
+
+            // ── Readiness score (computed from collected data) ─────────────────
+            function computeReadinessScore(d) {
+                let s = 300;
+                if (d.npsStatus === "active") s += 150;
+                else if (d.npsStatus === "inactive") s += 80;
+                else if (d.npsStatus === "heard") s += 40;
+                const age = parseInt(d.age) || 25;
+                if (age <= 22) s += 80;
+                else if (age <= 27) s += 60;
+                else if (age <= 32) s += 40;
+                else if (age <= 37) s += 20;
+                if (d.employment === "govt") s += 80;
+                else if (d.employment === "private") s += 60;
+                else if (d.employment === "self") s += 40;
+                const inc = parseInt(d.monthlyIncome) || 0;
+                if (inc >= 175000) s += 80;
+                else if (inc >= 125000) s += 70;
+                else if (inc >= 80000) s += 50;
+                else if (inc >= 50000) s += 30;
+                else s += 10;
+                if (d.taxFactKnown === "yes") s += 50;
+                if (parseInt(d.monthlyContribution) > 0) s += 40;
+                return Math.min(Math.max(s, 300), 900);
+            }
+
+            // ── CAMERA ────────────────────────────────────────────────────────
+
+            async function startCamera() {
+                const video = document.getElementById("camera-video");
+                const hint = document.getElementById("camera-hint");
+                const btn = document.getElementById("capture-btn");
+                const status = document.getElementById("cam-status");
+                try {
+                    cameraStream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            facingMode: "user",
+                            width: { ideal: 640 },
+                            height: { ideal: 640 },
+                        },
+                        audio: false,
+                    });
+                    video.srcObject = cameraStream;
+                    await video.play();
+                    hint.style.display = "none";
+                    btn.disabled = false;
+                    status.textContent = "Position your face in the circle";
+                } catch (err) {
+                    hint.querySelector("span:last-child").textContent =
+                        "Camera\nnot available";
+                    status.textContent = "Could not access camera";
+                    status.classList.add("error");
+                    console.warn("Camera error:", err.message);
+                }
+            }
+
+            function capturePhoto() {
+                const video = document.getElementById("camera-video");
+                const canvas = document.getElementById("camera-canvas");
+                const wrap = document.getElementById("camera-wrap");
+                const ring = document.getElementById("countdown-ring");
+                let count = 3;
+                ring.textContent = count;
+                ring.classList.add("show");
+                const tick = setInterval(() => {
+                    count--;
+                    if (count > 0) {
+                        ring.textContent = count;
+                    } else {
+                        clearInterval(tick);
+                        ring.classList.remove("show");
+                        const size = Math.min(
+                            video.videoWidth,
+                            video.videoHeight,
+                        );
+                        canvas.width = canvas.height = size;
+                        const ctx = canvas.getContext("2d");
+                        ctx.drawImage(
+                            video,
+                            (video.videoWidth - size) / 2,
+                            (video.videoHeight - size) / 2,
+                            size,
+                            size,
+                            0,
+                            0,
+                            size,
+                            size,
+                        );
+                        canvas.style.display = "block";
+                        video.style.display = "none";
+                        wrap.classList.add("has-photo");
+                        if (cameraStream) {
+                            cameraStream.getTracks().forEach((t) => t.stop());
+                            cameraStream = null;
+                        }
+                        canvas.toBlob(
+                            async (blob) => {
+                                capturedBlob = blob;
+                                await uploadPhoto(blob);
+                            },
+                            "image/jpeg",
+                            0.92,
+                        );
+                        document.getElementById("capture-btn").style.display =
+                            "none";
+                        document
+                            .getElementById("retake-btn")
+                            .classList.add("show");
+                        document.getElementById("cam-status").textContent =
+                            "Looking good! Enter your name below.";
+                    }
+                }, 800);
+            }
+
+            function retakePhoto() {
+                const video = document.getElementById("camera-video");
+                const canvas = document.getElementById("camera-canvas");
+                const wrap = document.getElementById("camera-wrap");
+                canvas.style.display = "none";
+                video.style.display = "block";
+                wrap.classList.remove("has-photo");
+                document.getElementById("capture-btn").style.display = "block";
+                document.getElementById("capture-btn").disabled = false;
+                document.getElementById("retake-btn").classList.remove("show");
+                capturedBlob = null;
+                generatedAvatars = null;
+                document.getElementById("cam-status").textContent =
+                    "Starting camera...";
+                startCamera();
+            }
+
+            async function uploadPhoto(blob) {
+                const status = document.getElementById("cam-status");
+                status.textContent = "Generating your future self...";
+                try {
+                    const form = new FormData();
+                    form.append("photo", blob, "photo.jpg");
+                    const res = await fetch(
+                        `${API_BASE}/api/avatars/generate`,
+                        { method: "POST", body: form },
+                    );
+                    if (res.ok) {
+                        const data = await res.json();
+                        generatedUserId = data.userId;
+                        generatedAvatars = data.avatars;
+                        if (generatedAvatars) {
+                            if (generatedAvatars.shocked_url)
+                                AVATAR_POSES.shocked = `${API_BASE}${generatedAvatars.shocked_url}`;
+                            if (generatedAvatars.talking_url)
+                                AVATAR_POSES.talking = `${API_BASE}${generatedAvatars.talking_url}`;
+                            if (generatedAvatars.thinking_url)
+                                AVATAR_POSES.thinking = `${API_BASE}${generatedAvatars.thinking_url}`;
+                            if (generatedAvatars.smiling_url)
+                                AVATAR_POSES.smiling = `${API_BASE}${generatedAvatars.smiling_url}`;
+                        }
+                        status.textContent =
+                            "Ready. Enter your name and begin.";
+                    } else {
+                        status.textContent =
+                            "Photo saved. Enter your name and begin.";
+                    }
+                } catch (err) {
+                    console.warn("Avatar generation failed:", err.message);
+                    status.textContent =
+                        "Photo saved. Enter your name and begin.";
+                }
+            }
+
+            window.addEventListener("DOMContentLoaded", startCamera);
+
+            // ── SCENE ENGINE ──────────────────────────────────────────────────
+
+            function beginJourney() {
+                if (!capturedBlob) {
+                    document.getElementById("cam-status").textContent =
+                        "Please take a photo first.";
+                    document
+                        .getElementById("cam-status")
+                        .classList.add("error");
+                    return;
+                }
+                const nameInput = document
+                    .getElementById("user-name")
+                    .value.trim();
+                userName = nameInput || "friend";
+                userData.confirmedName = userName;
+                scenes = buildScript(userName, userData).filter((s) => {
+                    if (typeof s.skip === "function") return !s.skip();
+                    return true;
+                });
+                const dotsEl = document.getElementById("progress-dots");
+                dotsEl.innerHTML = "";
+                scenes.forEach((_, i) => {
+                    const d = document.createElement("div");
+                    d.className = "dot";
+                    d.id = `dot-${i}`;
+                    dotsEl.appendChild(d);
+                });
+                document.getElementById("landing").classList.add("hide");
+                setTimeout(() => {
+                    document.getElementById("novel").classList.add("show");
+                    loadScene(0, true);
+                }, 800);
+            }
+
+            function loadScene(index, first = false) {
+                if (index >= scenes.length) {
+                    endNovel();
+                    return;
+                }
+                const scene = scenes[index];
+
+                // Re-evaluate skip at runtime (handles dynamic skip based on collected data)
+                if (typeof scene.skip === "function" && scene.skip()) {
+                    current++;
+                    loadScene(current, first);
+                    return;
+                }
+
+                const avatarLayer = document.getElementById("avatar-layer");
+                const dialogueBox = document.getElementById("dialogue-box");
+                inputAnswered = false;
+
+                if (first) {
+                    document.getElementById("bg-layer").style.backgroundImage =
+                        `url('${scene.bg}')`;
+                    applyScene(scene, index);
+                    return;
+                }
+
+                avatarLayer.style.opacity = "0";
+                dialogueBox.style.opacity = "0";
+                setTimeout(() => {
+                    document.getElementById("avatar-img").src = scene.avatar;
+                    const bgLayer = document.getElementById("bg-layer");
+                    if (
+                        bgLayer.style.backgroundImage !== `url("${scene.bg}")`
+                    ) {
+                        bgLayer.style.backgroundImage = `url('${scene.bg}')`;
+                    }
+                    applyScene(scene, index);
+                    setTimeout(() => {
+                        avatarLayer.style.opacity = "1";
+                        dialogueBox.style.opacity = "1";
+                    }, 50);
+                }, 350);
+            }
+
+            function applyScene(scene, index) {
+                document.getElementById("avatar-img").src = scene.avatar;
+                document.getElementById("speaker-tag").textContent =
+                    scene.speaker || "Future You";
+                const text =
+                    typeof scene.text === "function"
+                        ? scene.text()
+                        : scene.text;
+                document.getElementById("dialogue-text").textContent =
+                    text || "";
+                scenes.forEach((_, i) => {
+                    const d = document.getElementById(`dot-${i}`);
+                    if (d)
+                        d.className =
+                            "dot" +
+                            (i === index
+                                ? " active"
+                                : i < index
+                                  ? " done"
+                                  : "");
+                });
+                renderInput(scene);
+                updateNextButton(scene);
+            }
+
+            function getSceneInput(scene) {
+                // input can be a static object or a function (for dynamic inputs)
+                if (!scene.input) return null;
+                return typeof scene.input === "function"
+                    ? scene.input()
+                    : scene.input;
+            }
+
+            function renderInput(scene) {
+                const area = document.getElementById("scene-input-area");
+                area.innerHTML = "";
+                const inp = getSceneInput(scene);
+                if (!inp) return;
+
+                if (inp.type === "text" || inp.type === "password") {
+                    const wrap = document.createElement("div");
+                    wrap.className = "input-group";
+                    const el = document.createElement("input");
+                    el.type = inp.type === "password" ? "password" : "text";
+                    el.className = "scene-input";
+                    el.placeholder = inp.placeholder || "";
+                    el.value = inp.default || "";
+                    const btn = document.createElement("button");
+                    btn.className = "submit-btn";
+                    btn.textContent = inp.submitLabel || "Continue";
+                    btn.onclick = () => {
+                        const val = el.value.trim();
+                        if (!val) return;
+                        userData[inp.key] = val;
+                        inputAnswered = true;
+                        btn.disabled = true;
+                        el.disabled = true;
+                        btn.textContent = "Got it";
+                        updateNextButton(scene);
+                    };
+                    el.addEventListener("keydown", (e) => {
+                        if (e.key === "Enter") btn.click();
+                    });
+                    wrap.appendChild(el);
+                    wrap.appendChild(btn);
+                    area.appendChild(wrap);
+                } else if (inp.type === "range") {
+                    const wrap = document.createElement("div");
+                    wrap.className = "range-wrap";
+                    const valLabel = document.createElement("div");
+                    valLabel.className = "range-val";
+                    valLabel.textContent = inp.label
+                        ? inp.label(inp.default || inp.min)
+                        : inp.default || inp.min;
+                    const rowWrap = document.createElement("div");
+                    rowWrap.className = "input-group";
+                    const el = document.createElement("input");
+                    el.type = "range";
+                    el.className = "scene-input";
+                    el.min = inp.min;
+                    el.max = inp.max;
+                    el.value = inp.default || inp.min;
+                    el.style.flex = "1";
+                    el.oninput = () => {
+                        valLabel.textContent = inp.label
+                            ? inp.label(el.value)
+                            : el.value;
+                        userData[inp.key] = parseInt(el.value);
+                    };
+                    userData[inp.key] = parseInt(el.value);
+                    const btn = document.createElement("button");
+                    btn.className = "submit-btn";
+                    btn.textContent = inp.submitLabel || "That's right";
+                    btn.onclick = () => {
+                        inputAnswered = true;
+                        btn.disabled = true;
+                        el.disabled = true;
+                        btn.textContent = "Noted";
+                        updateNextButton(scene);
+                    };
+                    rowWrap.appendChild(el);
+                    rowWrap.appendChild(btn);
+                    wrap.appendChild(valLabel);
+                    wrap.appendChild(rowWrap);
+                    area.appendChild(wrap);
+                } else if (inp.type === "select") {
+                    const wrap = document.createElement("div");
+                    wrap.className = "input-group";
+                    const el = document.createElement("select");
+                    el.className = "scene-input";
+                    el.style.flex = "1";
+                    const def = document.createElement("option");
+                    def.value = "";
+                    def.textContent = inp.placeholder || "Select...";
+                    def.disabled = true;
+                    def.selected = true;
+                    el.appendChild(def);
+                    (inp.options || []).forEach((o) => {
+                        const opt = document.createElement("option");
+                        opt.value = o.value;
+                        opt.textContent = o.label;
+                        el.appendChild(opt);
+                    });
+                    const btn = document.createElement("button");
+                    btn.className = "submit-btn";
+                    btn.textContent = inp.submitLabel || "Continue";
+                    btn.onclick = () => {
+                        if (!el.value) return;
+                        userData[inp.key] = el.value;
+                        inputAnswered = true;
+                        btn.disabled = true;
+                        el.disabled = true;
+                        btn.textContent = "Got it";
+                        updateNextButton(scene);
+                    };
+                    wrap.appendChild(el);
+                    wrap.appendChild(btn);
+                    area.appendChild(wrap);
+                } else if (inp.type === "mcq") {
+                    const wrap = document.createElement("div");
+                    wrap.className = "mcq-options";
+                    (inp.options || []).forEach((o) => {
+                        const btn = document.createElement("button");
+                        btn.className = "mcq-opt";
+                        btn.textContent = o.label;
+                        btn.onclick = () => {
+                            if (inputAnswered) return;
+                            userData[inp.key] = o.value;
+                            inputAnswered = true;
+                            if (inp.isQuiz) {
+                                btn.classList.add(
+                                    o.correct ? "correct" : "wrong",
+                                );
+                                const msg = o.correct
+                                    ? inp.explanation.correct
+                                    : inp.explanation.wrong;
+                                setTimeout(() => {
+                                    document.getElementById(
+                                        "dialogue-text",
+                                    ).textContent = msg;
+                                }, 300);
+                            } else {
+                                btn.classList.add("selected");
+                            }
+                            wrap.querySelectorAll(".mcq-opt").forEach((b) => {
+                                b.disabled = true;
+                            });
+                            updateNextButton(scene);
+                        };
+                        wrap.appendChild(btn);
+                    });
+                    area.appendChild(wrap);
+                }
+            }
+
+            function updateNextButton(scene) {
+                const inp = getSceneInput(scene);
+                const needsAnswer = inp && inp.type !== "range";
+                const btn = document.getElementById("next-btn");
+                const hint = document.getElementById("tap-hint");
+                if (needsAnswer && !inputAnswered) {
+                    btn.style.opacity = "0.35";
+                    btn.style.pointerEvents = "none";
+                    hint.style.display = "none";
+                } else {
+                    btn.style.opacity = "1";
+                    btn.style.pointerEvents = "all";
+                    hint.style.display =
+                        current === scenes.length - 1 ? "none" : "block";
+                    if (current === scenes.length - 1)
+                        btn.childNodes[0].textContent = "See my dashboard ";
+                }
+            }
+
+            function advanceScene() {
+                if (isTransitioning) return;
+                const scene = scenes[current];
+                const inp = getSceneInput(scene);
+                if (inp && inp.type !== "range" && !inputAnswered) return;
+                isTransitioning = true;
+                current++;
+                if (current >= scenes.length) {
+                    endNovel();
+                    return;
+                }
+                loadScene(current);
+                setTimeout(() => {
+                    isTransitioning = false;
+                }, 700);
+            }
+
+            // ── REGISTRATION & REDIRECT ───────────────────────────────────────
+
+            async function endNovel() {
+                document.getElementById("fade-overlay").classList.add("active");
+                const readinessScore = computeReadinessScore(userData);
+
+                // Build payload — use midpoint values collected from the script
+                const payload = {
+                    email: userData.email,
+                    password: userData.password,
+                    name: userData.confirmedName || userName,
+                    age: parseInt(userData.age) || 25,
+                    employment_type: userData.employment,
+                    income_range: userData.monthlyIncome, // actual midpoint value
+                    nps_knowledge_level: userData.npsStatus,
+                    tax_fact_known: userData.taxFactKnown === "yes",
+                    tax_regime: userData.taxRegime,
+                    existing_80c: parseInt(userData.existing80C) || 0,
+                    employer_nps: userData.employerNPS === "yes",
+                    retirement_age: parseInt(userData.retirementAge) || 60,
+                    retirement_lifestyle: userData.retirementLifestyle,
+                    onboarding_responses: Object.entries(userData)
+                        .filter(
+                            ([k]) =>
+                                ![
+                                    "email",
+                                    "password",
+                                    "confirmedName",
+                                ].includes(k),
+                        )
+                        .map(([scene_key, answer]) => ({
+                            scene_key,
+                            answer: String(answer),
+                        })),
+                    avatars: generatedAvatars || {},
+                    nps_readiness_score: readinessScore,
+                    // NPS financials — sent directly so dashboard can calculate immediately
+                    nps: {
+                        has_account:
+                            userData.npsStatus === "active" ||
+                            userData.npsStatus === "inactive",
+                        tier1_balance: parseInt(userData.currentCorpus) || 0,
+                        monthly_contribution:
+                            parseInt(userData.monthlyContribution) || 0,
+                    },
+                    goals: {
+                        retirement_age_target:
+                            parseInt(userData.retirementAge) || 60,
+                        retirement_lifestyle: userData.retirementLifestyle,
+                    },
+                };
+
+                try {
+                    const res = await fetch(`${API_BASE}/api/auth/register`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                        if (res.status === 409) {
+                            const lr = await fetch(
+                                `${API_BASE}/api/auth/login`,
+                                {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                        email: userData.email,
+                                        password: userData.password,
+                                    }),
+                                },
+                            );
+                            const ld = await lr.json();
+                            if (lr.ok) {
+                                storeAndRedirect(ld, readinessScore, payload);
+                                return;
+                            }
+                        }
+                        throw new Error(data.error || "Registration failed");
+                    }
+                    storeAndRedirect(data, readinessScore, payload);
+                } catch (err) {
+                    console.error("Registration error:", err.message);
+                    // Fallback: build a complete local user object so dashboard works offline
+                    const fallback = {
+                        name: payload.name,
+                        age: payload.age,
+                        employment: {
+                            type: payload.employment_type,
+                            income_range: payload.income_range,
+                            monthly_income_exact:
+                                parseInt(payload.income_range) || 50000,
+                        },
+                        nps: payload.nps,
+                        goals: payload.goals,
+                        gamification: { nps_readiness_score: readinessScore },
+                        onboarding: {
+                            nps_knowledge_level: payload.nps_knowledge_level,
+                            tax_fact_known: payload.tax_fact_known,
+                            tax_regime: payload.tax_regime,
+                        },
+                        avatars: generatedAvatars || {},
+                    };
+                    localStorage.setItem(
+                        "futureyou_user",
+                        JSON.stringify(fallback),
+                    );
+                    localStorage.removeItem("futureyou_token");
+                    document
+                        .getElementById("fade-overlay")
+                        .classList.remove("active");
+                    window.location.href = "futureyou_dashboard.html";
+                }
+            }
+
+            function storeAndRedirect(authData, readinessScore, payload) {
+                const user = authData.user || {};
+                if (!user.gamification) user.gamification = {};
+                user.gamification.nps_readiness_score = readinessScore;
+                // Ensure NPS and goals are stored even if backend doesn't echo them back
+                if (!user.nps) user.nps = payload.nps;
+                if (!user.goals) user.goals = payload.goals;
+                if (!user.employment)
+                    user.employment = {
+                        type: payload.employment_type,
+                        income_range: payload.income_range,
+                        monthly_income_exact:
+                            parseInt(payload.income_range) || 50000,
+                    };
+                localStorage.setItem("futureyou_token", authData.token);
+                localStorage.setItem("futureyou_user", JSON.stringify(user));
+                window.location.href = "futureyou_dashboard.html";
+            }
+        </script>
+    </body>
+</html>

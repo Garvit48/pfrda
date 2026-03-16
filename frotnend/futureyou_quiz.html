@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FutureYou — NPS Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --orange:#F26522;--navy:#1A3A5C;--mid:#2E5F8A;
+  --bg:#F4F6F9;--surface:#fff;--border:#E2E8F0;
+  --text:#1A3A5C;--muted:#64829A;
+  --green:#15803D;--green-bg:#DCFCE7;
+  --red:#DC2626;--red-bg:#FEE2E2;
+  --amber:#B45309;--amber-bg:#FEF3C7;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;}
+.back-link{font-size:13px;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:4px;}
+.back-link:hover{color:var(--navy);}
+.topbar-title{font-family:'Instrument Serif',serif;font-size:18px;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.q-counter{font-size:13px;color:var(--muted);}
+.score-badge{background:var(--navy);color:white;font-size:13px;font-weight:500;padding:5px 14px;border-radius:20px;}
+
+.quiz-wrap{max-width:640px;margin:0 auto;padding:32px 24px;display:flex;flex-direction:column;gap:24px;}
+
+/* Progress bar */
+.prog-bar-wrap{display:flex;flex-direction:column;gap:6px;}
+.prog-bar-track{height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.prog-bar-fill{height:100%;background:var(--orange);border-radius:3px;transition:width 0.4s ease;}
+.prog-labels{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);}
+
+/* Question card */
+.q-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:20px;}
+.q-category{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;padding:3px 10px;border-radius:20px;display:inline-block;align-self:flex-start;}
+.cat-tax{background:var(--amber-bg);color:var(--amber);}
+.cat-rules{background:#EDE9FE;color:#6D28D9;}
+.cat-account{background:#DBEAFE;color:#1D4ED8;}
+.cat-returns{background:var(--green-bg);color:var(--green);}
+.cat-withdrawal{background:#FFE4E6;color:#BE123C;}
+
+.q-text{font-family:'Instrument Serif',serif;font-size:20px;color:var(--navy);line-height:1.4;}
+.options{display:flex;flex-direction:column;gap:10px;}
+
+.opt-btn{
+  background:var(--bg);border:2px solid var(--border);border-radius:10px;
+  padding:14px 18px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);
+  cursor:pointer;text-align:left;transition:all 0.15s;
+  display:flex;align-items:center;gap:12px;
+}
+.opt-btn:hover:not(.disabled){border-color:var(--mid);background:#EFF6FF;}
+.opt-btn.selected{border-color:var(--mid);background:#EFF6FF;}
+.opt-btn.correct{border-color:var(--green);background:var(--green-bg);color:var(--green);}
+.opt-btn.wrong{border-color:var(--red);background:var(--red-bg);color:var(--red);}
+.opt-btn.disabled{cursor:default;}
+
+.opt-letter{width:26px;height:26px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;transition:all 0.15s;}
+.opt-btn.correct .opt-letter{background:var(--green);color:white;}
+.opt-btn.wrong .opt-letter{background:var(--red);color:white;}
+.opt-btn.selected:not(.correct):not(.wrong) .opt-letter{background:var(--mid);color:white;}
+
+/* Explanation */
+.explanation{display:none;padding:14px 16px;border-radius:10px;font-size:13px;line-height:1.6;border-left:3px solid;}
+.explanation.show{display:block;}
+.explanation.correct-exp{background:var(--green-bg);border-color:var(--green);color:#166534;}
+.explanation.wrong-exp{background:var(--red-bg);border-color:var(--red);color:#991B1B;}
+
+/* Bottom row */
+.bottom-row{display:flex;align-items:center;justify-content:space-between;}
+.streak-pill{font-size:13px;color:var(--orange);background:rgba(242,101,34,0.08);padding:5px 12px;border-radius:20px;}
+.next-btn{background:var(--navy);color:white;border:none;padding:12px 32px;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:background 0.15s;display:none;}
+.next-btn.show{display:block;}
+.next-btn:hover{background:var(--mid);}
+
+/* Results */
+.results-wrap{display:none;flex-direction:column;gap:20px;animation:popIn 0.4s ease;}
+.results-wrap.show{display:flex;}
+@keyframes popIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+.results-hero{background:var(--navy);border-radius:16px;padding:32px;text-align:center;color:white;}
+.results-emoji{font-size:48px;margin-bottom:12px;}
+.results-pct{font-family:'Instrument Serif',serif;font-size:56px;color:white;line-height:1;}
+.results-label{font-size:15px;color:rgba(255,255,255,0.6);margin-top:4px;}
+.results-xp{display:inline-block;margin-top:12px;background:rgba(242,101,34,0.25);color:#FDBA74;font-size:14px;font-weight:500;padding:5px 16px;border-radius:20px;}
+
+.results-breakdown{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.breakdown-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;}
+.breakdown-val{font-family:'Instrument Serif',serif;font-size:28px;color:var(--navy);}
+.breakdown-val.green{color:var(--green);}
+.breakdown-val.red{color:var(--red);}
+.breakdown-label{font-size:12px;color:var(--muted);margin-top:2px;}
+
+.review-list{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.review-header{padding:14px 20px;border-bottom:1px solid var(--border);font-size:14px;font-weight:500;color:var(--navy);}
+.review-row{display:flex;align-items:flex-start;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);font-size:13px;}
+.review-row:last-child{border-bottom:none;}
+.review-icon{flex-shrink:0;font-size:16px;margin-top:1px;}
+.review-q{color:var(--text);line-height:1.4;}
+.review-a{font-size:12px;color:var(--muted);margin-top:3px;}
+
+.action-row{display:flex;gap:12px;justify-content:center;}
+.btn{padding:12px 28px;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all 0.15s;}
+.btn-primary{background:var(--orange);color:white;}
+.btn-primary:hover{background:#D4541A;}
+.btn-outline{background:var(--surface);border:1px solid var(--border);color:var(--navy);}
+.btn-outline:hover{border-color:var(--navy);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back-link" href="futureyou_games.html">&#8592; Games</a>
+  <div class="topbar-title">NPS Knowledge Quiz</div>
+  <div class="topbar-right">
+    <span class="q-counter" id="q-counter">Question 1 of 10</span>
+    <span class="score-badge" id="score-badge">0 / 0</span>
+  </div>
+</div>
+
+<div class="quiz-wrap">
+  <!-- Progress -->
+  <div class="prog-bar-wrap">
+    <div class="prog-bar-track"><div class="prog-bar-fill" id="prog-fill" style="width:0%"></div></div>
+    <div class="prog-labels"><span id="prog-left">0 of 10 answered</span><span id="prog-right">0 correct</span></div>
+  </div>
+
+  <!-- Question -->
+  <div id="quiz-area">
+    <div class="q-card" id="q-card">
+      <span class="q-category" id="q-cat"></span>
+      <div class="q-text" id="q-text"></div>
+      <div class="options" id="options"></div>
+      <div class="explanation" id="explanation"></div>
+    </div>
+    <div class="bottom-row" style="margin-top:12px;">
+      <div class="streak-pill" id="streak-pill">🔥 0 streak</div>
+      <button class="next-btn" id="next-btn" onclick="nextQuestion()">Next question &#8594;</button>
+    </div>
+  </div>
+
+  <!-- Results (hidden until end) -->
+  <div class="results-wrap" id="results-wrap">
+    <div class="results-hero">
+      <div class="results-emoji" id="r-emoji">🎉</div>
+      <div class="results-pct" id="r-pct">70%</div>
+      <div class="results-label" id="r-label">7 out of 10 correct</div>
+      <div class="results-xp" id="r-xp">+42 XP earned</div>
+    </div>
+    <div class="results-breakdown">
+      <div class="breakdown-card"><div class="breakdown-val green" id="r-correct">0</div><div class="breakdown-label">Correct</div></div>
+      <div class="breakdown-card"><div class="breakdown-val red" id="r-wrong">0</div><div class="breakdown-label">Wrong</div></div>
+      <div class="breakdown-card"><div class="breakdown-val" id="r-streak">0</div><div class="breakdown-label">Best streak</div></div>
+    </div>
+    <div class="review-list">
+      <div class="review-header">Question review</div>
+      <div id="review-list"></div>
+    </div>
+    <div class="action-row">
+      <button class="btn btn-primary" onclick="initQuiz()">Try again</button>
+      <a href="futureyou_games.html" class="btn btn-outline">Back to games</a>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// QUESTION BANK — 20 questions, 10 picked randomly each game
+// ══════════════════════════════════════════════════════════════
+const QUESTION_BANK = [
+  {
+    cat:'tax', catLabel:'Tax Benefits',
+    q:'What is the maximum additional tax deduction available exclusively under Section 80CCD(1B) for NPS contributions?',
+    opts:['₹1,00,000','₹50,000','₹1,50,000','₹25,000'], correct:1,
+    exp:'Section 80CCD(1B) allows an exclusive ₹50,000 deduction on top of the ₹1.5L limit under 80C — unique to NPS subscribers.',
+  },
+  {
+    cat:'rules', catLabel:'NPS Rules',
+    q:'What is the normal exit age for NPS Tier I subscribers?',
+    opts:['55 years','58 years','60 years','65 years'], correct:2,
+    exp:'The normal exit age for NPS is 60. You can also defer withdrawal up to age 75 if you wish to stay invested longer.',
+  },
+  {
+    cat:'account', catLabel:'Account Basics',
+    q:'What percentage of the NPS corpus must compulsorily be used to purchase an annuity at retirement?',
+    opts:['20%','40%','60%','80%'], correct:1,
+    exp:'At normal exit (age 60), at least 40% of the Tier I corpus must be used to buy an annuity. The remaining 60% is a tax-free lump sum.',
+  },
+  {
+    cat:'tax', catLabel:'Tax Benefits',
+    q:'What percentage of the NPS corpus received as a lump sum at maturity is tax-free?',
+    opts:['40%','50%','60%','100%'], correct:2,
+    exp:'60% of the corpus withdrawn as lump sum at retirement is completely tax-free. The 40% used for annuity purchase is taxable as income.',
+  },
+  {
+    cat:'rules', catLabel:'NPS Rules',
+    q:'What is the fund management charge (FMC) for NPS — making it one of the cheapest pension products globally?',
+    opts:['0.50% p.a.','1.00% p.a.','0.09% p.a.','0.25% p.a.'], correct:2,
+    exp:'NPS charges just 0.09% per annum in fund management fees — significantly lower than mutual funds and insurance products.',
+  },
+  {
+    cat:'account', catLabel:'Account Basics',
+    q:'What does PRAN stand for in the context of NPS?',
+    opts:['Pension Retirement Annuity Number','Permanent Retirement Account Number','Public Retirement Account Node','Pension Registration and Allocation Number'], correct:1,
+    exp:'PRAN stands for Permanent Retirement Account Number — a unique 12-digit number assigned to every NPS subscriber for life.',
+  },
+  {
+    cat:'withdrawal', catLabel:'Withdrawals',
+    q:'After how many years of NPS subscription can you make a partial withdrawal from Tier I?',
+    opts:['1 year','2 years','3 years','5 years'], correct:2,
+    exp:'Partial withdrawal from Tier I is allowed only after 3 years. You can withdraw up to 25% of your own contributions for specified purposes.',
+  },
+  {
+    cat:'account', catLabel:'Account Basics',
+    q:'Which of the following is NOT one of the asset classes available in NPS?',
+    opts:['Equity (E)','Government Securities (G)','Real Estate (R)','Corporate Bonds (C)'], correct:2,
+    exp:'NPS has 4 asset classes: Equity (E), Corporate Bonds (C), Government Securities (G), and Alternative Assets (A). Real Estate is not a direct NPS asset class.',
+  },
+  {
+    cat:'rules', catLabel:'NPS Rules',
+    q:'If a subscriber exits NPS before age 60, what minimum percentage of the corpus must be used to buy an annuity?',
+    opts:['40%','60%','80%','100%'], correct:2,
+    exp:'Premature exit from NPS before age 60 requires using at least 80% of the corpus to purchase an annuity — much higher than the 40% at normal retirement.',
+  },
+  {
+    cat:'tax', catLabel:'Tax Benefits',
+    q:'Under which section of the Income Tax Act can salaried employees claim deduction for employer\'s contribution to NPS?',
+    opts:['Section 80C','Section 80CCD(1)','Section 80CCD(2)','Section 10(14)'], correct:2,
+    exp:'Employer\'s contribution to NPS is deductible under Section 80CCD(2) — up to 10% of salary for private sector and 14% for central government employees.',
+  },
+  {
+    cat:'account', catLabel:'Account Basics',
+    q:'NPS Tier II account differs from Tier I mainly because it:',
+    opts:['Offers higher returns','Has no withdrawal restrictions','Is only for government employees','Gets additional tax benefits'], correct:1,
+    exp:'Tier II is a voluntary savings account with complete flexibility — no lock-in, withdraw anytime. However, it does not offer the same tax benefits as Tier I.',
+  },
+  {
+    cat:'rules', catLabel:'NPS Rules',
+    q:'Who regulates the National Pension System in India?',
+    opts:['SEBI','RBI','IRDAI','PFRDA'], correct:3,
+    exp:'PFRDA — Pension Fund Regulatory and Development Authority — was established in 2003 to regulate and oversee NPS and other pension schemes in India.',
+  },
+  {
+    cat:'withdrawal', catLabel:'Withdrawals',
+    q:'For what maximum percentage of your own NPS contributions can you make a partial withdrawal?',
+    opts:['10%','25%','50%','75%'], correct:1,
+    exp:'You can withdraw up to 25% of your own contributions (not the corpus total) from NPS Tier I after 3 years, for approved purposes.',
+  },
+  {
+    cat:'tax', catLabel:'Tax Benefits',
+    q:'Self-employed individuals can claim NPS deduction of up to what percentage of gross income under 80CCD(1)?',
+    opts:['10%','15%','20%','25%'], correct:2,
+    exp:'Self-employed and non-salaried individuals can claim a deduction of up to 20% of gross income under Section 80CCD(1) for NPS contributions.',
+  },
+  {
+    cat:'account', catLabel:'Account Basics',
+    q:'In the NPS Auto Choice (Lifecycle Fund), what happens to equity allocation as the subscriber gets older?',
+    opts:['It increases','It stays constant','It decreases','It doubles after 50'], correct:2,
+    exp:'In Auto Choice, equity exposure starts high (up to 75%) when young and gradually decreases as the subscriber ages — protecting the corpus from market volatility closer to retirement.',
+  },
+  {
+    cat:'rules', catLabel:'NPS Rules',
+    q:'Which of the following is a valid reason for partial withdrawal from NPS Tier I?',
+    opts:['Buying a car','Foreign vacation','Child\'s higher education','Starting a business'], correct:2,
+    exp:'PFRDA allows partial withdrawals for specific life events: higher education/marriage of children, critical illness, purchase/construction of a house, and skill development.',
+  },
+  {
+    cat:'account', catLabel:'Account Basics',
+    q:'What is the minimum annual contribution required to keep an NPS Tier I account active?',
+    opts:['₹500','₹1,000','₹500','₹5,000'], correct:1,
+    exp:'A minimum contribution of ₹1,000 per year is required to keep an NPS Tier I account active. Failing this freezes the account.',
+  },
+  {
+    cat:'tax', catLabel:'Tax Benefits',
+    q:'The ₹50,000 deduction under 80CCD(1B) is available:',
+    opts:['Only to government employees','Only to salaried employees','To all NPS subscribers — salaried or self-employed','Only if you invest in equity funds'], correct:2,
+    exp:'The 80CCD(1B) benefit of ₹50,000 is available to all NPS Tier I subscribers regardless of employment type — it\'s an exclusive NPS benefit.',
+  },
+  {
+    cat:'withdrawal', catLabel:'Withdrawals',
+    q:'Up to what age can an NPS subscriber defer withdrawal after reaching 60?',
+    opts:['65 years','70 years','75 years','No limit'], correct:2,
+    exp:'NPS subscribers who reach 60 can defer their withdrawal and continue to stay invested up to age 75, allowing their corpus to grow further.',
+  },
+  {
+    cat:'account', catLabel:'Account Basics',
+    q:'What type of organisation maintains the NPS account records as a Central Recordkeeping Agency (CRA)?',
+    opts:['Banks','NSDL or KFintech','Insurance companies','SEBI-registered brokers'], correct:1,
+    exp:'NSDL (National Securities Depository Limited) and KFintech (formerly CAMS) are the two CRAs authorised by PFRDA to maintain NPS subscriber records.',
+  },
+];
+
+const CAT_CLASS = { tax:'cat-tax', rules:'cat-rules', account:'cat-account', returns:'cat-returns', withdrawal:'cat-withdrawal' };
+const TOTAL_Q = 10;
+
+let questions = [];
+let currentQ = 0;
+let correctCount = 0;
+let streak = 0;
+let bestStreak = 0;
+let results = [];
+
+function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+function initQuiz() {
+  questions = shuffle(QUESTION_BANK).slice(0, TOTAL_Q).map(q => ({
+    ...q, opts: [...q.opts], shuffledCorrect: q.correct
+  }));
+  currentQ = 0; correctCount = 0; streak = 0; bestStreak = 0; results = [];
+  document.getElementById('results-wrap').className = 'results-wrap';
+  document.getElementById('quiz-area').style.display = '';
+  document.getElementById('prog-fill').style.width = '0%';
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[currentQ];
+  document.getElementById('q-counter').textContent = `Question ${currentQ+1} of ${TOTAL_Q}`;
+  document.getElementById('score-badge').textContent = `${correctCount} / ${currentQ}`;
+  document.getElementById('prog-fill').style.width = ((currentQ / TOTAL_Q) * 100) + '%';
+  document.getElementById('prog-left').textContent = `${currentQ} of ${TOTAL_Q} answered`;
+  document.getElementById('prog-right').textContent = `${correctCount} correct`;
+  document.getElementById('streak-pill').textContent = `🔥 ${streak} streak`;
+
+  const catEl = document.getElementById('q-cat');
+  catEl.textContent = q.catLabel;
+  catEl.className = 'q-category ' + (CAT_CLASS[q.cat] || 'cat-rules');
+
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('explanation').className = 'explanation';
+  document.getElementById('next-btn').className = 'next-btn';
+
+  const optsDiv = document.getElementById('options');
+  optsDiv.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<div class="opt-letter">${String.fromCharCode(65+i)}</div><span>${opt}</span>`;
+    btn.onclick = () => handleAnswer(i, btn);
+    optsDiv.appendChild(btn);
+  });
+
+  // Animate card in
+  const card = document.getElementById('q-card');
+  card.style.animation = 'none';
+  card.offsetHeight;
+  card.style.animation = 'popIn 0.3s ease';
+}
+
+function handleAnswer(idx, btn) {
+  const q = questions[currentQ];
+  const allBtns = document.getElementById('options').querySelectorAll('.opt-btn');
+  allBtns.forEach(b => b.classList.add('disabled'));
+
+  const isCorrect = idx === q.shuffledCorrect;
+  const expEl = document.getElementById('explanation');
+
+  if (isCorrect) {
+    btn.classList.add('correct');
+    correctCount++;
+    streak++;
+    if (streak > bestStreak) bestStreak = streak;
+    expEl.className = 'explanation show correct-exp';
+    expEl.textContent = '✅ ' + q.exp;
+  } else {
+    btn.classList.add('wrong');
+    allBtns[q.shuffledCorrect].classList.add('correct');
+    streak = 0;
+    expEl.className = 'explanation show wrong-exp';
+    expEl.textContent = '❌ ' + q.exp;
+  }
+
+  document.getElementById('streak-pill').textContent = `🔥 ${streak} streak`;
+  document.getElementById('score-badge').textContent = `${correctCount} / ${currentQ+1}`;
+
+  results.push({ q: q.q, correct: isCorrect, correctAns: q.opts[q.shuffledCorrect] });
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.className = 'next-btn show';
+  if (currentQ === TOTAL_Q - 1) nextBtn.textContent = 'See results';
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ >= TOTAL_Q) { showResults(); return; }
+  showQuestion();
+}
+
+function showResults() {
+  document.getElementById('quiz-area').style.display = 'none';
+  document.getElementById('prog-fill').style.width = '100%';
+
+  const pct = Math.round((correctCount / TOTAL_Q) * 100);
+  const xp  = Math.round((correctCount / TOTAL_Q) * 60);
+  const emoji = pct === 100 ? '🏆' : pct >= 70 ? '🎉' : pct >= 50 ? '👍' : '📚';
+  const label = pct === 100 ? 'Perfect score!' : pct >= 70 ? 'Great job!' : pct >= 50 ? 'Good effort!' : 'Keep learning!';
+
+  document.getElementById('r-emoji').textContent = emoji;
+  document.getElementById('r-pct').textContent = pct + '%';
+  document.getElementById('r-label').textContent = `${correctCount} out of ${TOTAL_Q} correct — ${label}`;
+  document.getElementById('r-xp').textContent = `+${xp} XP earned`;
+  document.getElementById('r-correct').textContent = correctCount;
+  document.getElementById('r-wrong').textContent = TOTAL_Q - correctCount;
+  document.getElementById('r-streak').textContent = bestStreak;
+
+  const reviewList = document.getElementById('review-list');
+  reviewList.innerHTML = results.map(r => `
+    <div class="review-row">
+      <div class="review-icon">${r.correct ? '✅' : '❌'}</div>
+      <div>
+        <div class="review-q">${r.q}</div>
+        ${!r.correct ? `<div class="review-a">Correct answer: <strong>${r.correctAns}</strong></div>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('results-wrap').className = 'results-wrap show';
+}
+
+initQuiz();
+</script>
+</body>
+</html>

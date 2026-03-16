@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FutureYou — My NPS Account</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --orange:#F26522; --navy:#1A3A5C; --mid:#2E5F8A;
+  --bg:#F4F6F9; --surface:#fff; --border:#E2E8F0;
+  --text:#1A3A5C; --muted:#64829A; --sidebar-w:240px;
+  --green:#15803D; --green-bg:#DCFCE7;
+  --amber:#B45309; --amber-bg:#FEF3C7;
+  --red:#DC2626; --red-bg:#FEE2E2;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar-w);background:var(--navy);min-height:100vh;position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:50;}
+.sidebar-logo{padding:28px 24px 24px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,0.08);}
+.logo-icon{width:36px;height:36px;background:var(--orange);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Instrument Serif',serif;font-size:18px;color:white;}
+.logo-text{font-family:'Instrument Serif',serif;font-size:20px;color:white;}
+.logo-text span{color:#F9915A;}
+.sidebar-nav{flex:1;padding:20px 12px;display:flex;flex-direction:column;gap:4px;overflow-y:auto;}
+.nav-label{font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.3);padding:16px 12px 8px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:rgba(255,255,255,0.6);font-size:14px;cursor:pointer;transition:all 0.15s;text-decoration:none;}
+.nav-item:hover{background:rgba(255,255,255,0.07);color:white;}
+.nav-item.active{background:rgba(242,101,34,0.2);color:white;}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.2);flex-shrink:0;}
+.nav-item.active .nav-dot{background:var(--orange);}
+.sidebar-footer{padding:16px 12px;border-top:1px solid rgba(255,255,255,0.08);}
+.user-pill{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,0.05);}
+.user-av{width:32px;height:32px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:white;flex-shrink:0;}
+.user-nm{font-size:13px;color:white;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ── MAIN ── */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;}
+.topbar-title{font-family:'Instrument Serif',serif;font-size:20px;}
+.save-btn{background:var(--orange);color:white;border:none;padding:9px 22px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:background 0.15s;display:none;}
+.save-btn:hover{background:#D4541A;}
+.save-btn.show{display:block;}
+.save-btn.saving{opacity:0.6;cursor:not-allowed;}
+
+.content{padding:32px;display:flex;flex-direction:column;gap:24px;max-width:900px;}
+
+/* ── STATUS BANNER ── */
+.status-banner{border-radius:14px;padding:20px 24px;display:flex;align-items:center;gap:16px;}
+.status-banner.no-account{background:var(--amber-bg);border:1px solid rgba(180,83,9,0.2);}
+.status-banner.has-account{background:var(--green-bg);border:1px solid rgba(21,128,61,0.2);}
+.status-icon{font-size:24px;flex-shrink:0;}
+.status-body{flex:1;}
+.status-title{font-size:15px;font-weight:500;color:var(--text);}
+.status-sub{font-size:13px;color:var(--muted);margin-top:2px;}
+.open-nps-btn{background:var(--navy);color:white;border:none;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:background 0.15s;}
+.open-nps-btn:hover{background:var(--mid);}
+
+/* ── SECTION CARDS ── */
+.section-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.section-header{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.section-title{font-size:15px;font-weight:500;color:var(--text);}
+.section-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.edit-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;}
+.edit-btn:hover{border-color:var(--navy);color:var(--navy);}
+.edit-btn.active{background:var(--navy);color:white;border-color:var(--navy);}
+
+.section-body{padding:20px 24px;display:flex;flex-direction:column;gap:16px;}
+
+/* ── FIELDS ── */
+.fields-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.field{display:flex;flex-direction:column;gap:6px;}
+.field.full{grid-column:1/-1;}
+.field label{font-size:11px;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);}
+
+.field-value{font-size:15px;color:var(--text);padding:10px 0;border-bottom:1px solid transparent;}
+.field-value.empty{color:var(--muted);font-style:italic;}
+
+.field input, .field select{
+  background:var(--bg);border:1.5px solid var(--border);border-radius:8px;
+  padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);
+  outline:none;transition:border-color 0.2s;width:100%;
+}
+.field input:focus, .field select:focus{border-color:var(--mid);}
+.field input::placeholder{color:var(--muted);opacity:0.6;}
+.field input:disabled, .field select:disabled{background:var(--bg);color:var(--muted);cursor:not-allowed;}
+
+/* Toggle */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;}
+.toggle-label{font-size:14px;color:var(--text);}
+.toggle-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.toggle-wrap{position:relative;width:44px;height:24px;flex-shrink:0;}
+.toggle-wrap input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:12px;cursor:pointer;transition:background 0.2s;}
+.toggle-slider::after{content:'';position:absolute;width:18px;height:18px;background:white;border-radius:50%;top:3px;left:3px;transition:transform 0.2s;box-shadow:0 1px 4px rgba(0,0,0,0.15);}
+.toggle-wrap input:checked + .toggle-slider{background:var(--green);}
+.toggle-wrap input:checked + .toggle-slider::after{transform:translateX(20px);}
+.toggle-wrap input:disabled + .toggle-slider{opacity:0.5;cursor:not-allowed;}
+
+/* ── STAT CHIPS ── */
+.stat-chips{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.stat-chip{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+.chip-label{font-size:11px;color:var(--muted);margin-bottom:4px;}
+.chip-value{font-family:'Instrument Serif',serif;font-size:22px;color:var(--navy);}
+.chip-value.green{color:var(--green);}
+.chip-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* ── ALLOCATION BARS ── */
+.alloc-row{display:flex;align-items:center;gap:12px;}
+.alloc-label{font-size:13px;color:var(--text);min-width:160px;}
+.alloc-track{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.alloc-fill{height:100%;border-radius:3px;transition:width 0.5s ease;}
+.alloc-pct{font-size:13px;font-weight:500;color:var(--text);min-width:36px;text-align:right;}
+.alloc-input-row{display:flex;align-items:center;gap:8px;}
+.alloc-input{width:70px;text-align:center;}
+
+/* ── FUND MANAGERS ── */
+.fm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.fm-card{border:2px solid var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:all 0.15s;font-size:13px;color:var(--muted);}
+.fm-card:hover{border-color:var(--mid);color:var(--navy);}
+.fm-card.selected{border-color:var(--orange);background:rgba(242,101,34,0.05);color:var(--navy);font-weight:500;}
+.fm-card.disabled{cursor:default;pointer-events:none;}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--navy);color:white;
+  padding:12px 20px;border-radius:10px;font-size:14px;
+  opacity:0;transform:translateY(8px);
+  transition:all 0.3s;pointer-events:none;z-index:200;
+}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.success{background:var(--green);}
+.toast.error{background:var(--red);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.content > *{animation:fadeUp 0.35s ease both;}
+.content > *:nth-child(1){animation-delay:0.05s}
+.content > *:nth-child(2){animation-delay:0.1s}
+.content > *:nth-child(3){animation-delay:0.15s}
+.content > *:nth-child(4){animation-delay:0.2s}
+.content > *:nth-child(5){animation-delay:0.25s}
+
+@media(max-width:768px){.sidebar{display:none;}.main{margin-left:0;}.fields-grid{grid-template-columns:1fr;}.stat-chips{grid-template-columns:1fr 1fr;}.fm-grid{grid-template-columns:repeat(2,1fr);}}.content{padding:20px;}
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">F</div>
+    <div class="logo-text">Future<span>You</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Main</div>
+    <a class="nav-item" href="futureyou_dashboard.html"><div class="nav-dot"></div> Dashboard</a>
+    <a class="nav-item active" href="#"><div class="nav-dot"></div> My NPS Account</a>
+    <a class="nav-item" href="#"><div class="nav-dot"></div> Contributions</a>
+    <a class="nav-item" href="#"><div class="nav-dot"></div> Tax Benefits</a>
+    <div class="nav-label">Tools</div>
+    <a class="nav-item" href="futureyou_games.html"><div class="nav-dot"></div> Games &amp; Learn</a>
+    <a class="nav-item" href="futureyou_chat.html"><div class="nav-dot"></div> Talk to Future Self</a>
+    <a class="nav-item" href="#"><div class="nav-dot"></div> FAQ</a>
+    <div class="nav-label">Account</div>
+    <a class="nav-item" href="#"><div class="nav-dot"></div> Complete Profile</a>
+    <a class="nav-item" href="#"><div class="nav-dot"></div> Settings</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="user-av" id="sidebar-av">A</div>
+      <div class="user-nm" id="sidebar-nm">Loading...</div>
+    </div>
+  </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-title">My NPS Account</div>
+    <button class="save-btn" id="save-btn" onclick="saveAll()">Save changes</button>
+  </div>
+
+  <div class="content">
+
+    <!-- Status banner -->
+    <div class="status-banner" id="status-banner">
+      <div class="status-icon" id="status-icon"></div>
+      <div class="status-body">
+        <div class="status-title" id="status-title"></div>
+        <div class="status-sub" id="status-sub"></div>
+      </div>
+      <button class="open-nps-btn" id="open-nps-btn" onclick="window.open('https://enps.nsdl.com','_blank')">Open NPS Account</button>
+    </div>
+
+    <!-- Account overview stats -->
+    <div class="stat-chips" id="stat-chips">
+      <div class="stat-chip">
+        <div class="chip-label">Tier I balance</div>
+        <div class="chip-value green" id="chip-tier1">₹0</div>
+        <div class="chip-sub">Main retirement account</div>
+      </div>
+      <div class="stat-chip">
+        <div class="chip-label">Tier II balance</div>
+        <div class="chip-value" id="chip-tier2">₹0</div>
+        <div class="chip-sub">Flexible savings</div>
+      </div>
+      <div class="stat-chip">
+        <div class="chip-label">Monthly contribution</div>
+        <div class="chip-value" id="chip-contrib">₹0</div>
+        <div class="chip-sub" id="chip-contrib-sub">Set up auto-debit</div>
+      </div>
+    </div>
+
+    <!-- Section 1: Account Details -->
+    <div class="section-card">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Account details</div>
+          <div class="section-sub">Your PRAN and account registration info</div>
+        </div>
+        <button class="edit-btn" id="edit-account-btn" onclick="toggleEdit('account')">Edit</button>
+      </div>
+      <div class="section-body">
+        <div class="fields-grid">
+          <div class="field">
+            <label>PRAN number</label>
+            <div class="field-value empty" id="view-pran">Not linked</div>
+            <input type="text" id="edit-pran" placeholder="12-digit PRAN" maxlength="12" style="display:none"/>
+          </div>
+          <div class="field">
+            <label>Account type</label>
+            <div class="field-value" id="view-account-type">—</div>
+            <select id="edit-account-type" style="display:none">
+              <option value="">Select type</option>
+              <option value="govt">Government (Central/State)</option>
+              <option value="corporate">Corporate NPS</option>
+              <option value="all_citizen">All Citizen Model</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Fund manager</label>
+            <div class="field-value" id="view-fund-manager">—</div>
+            <div id="edit-fund-manager" style="display:none">
+              <div class="fm-grid">
+                <div class="fm-card" data-fm="SBI Pension Funds" onclick="selectFM(this)">SBI</div>
+                <div class="fm-card" data-fm="LIC Pension Fund" onclick="selectFM(this)">LIC</div>
+                <div class="fm-card" data-fm="HDFC Pension Fund" onclick="selectFM(this)">HDFC</div>
+                <div class="fm-card" data-fm="ICICI Pru Pension" onclick="selectFM(this)">ICICI</div>
+                <div class="fm-card" data-fm="Kotak Pension Fund" onclick="selectFM(this)">Kotak</div>
+                <div class="fm-card" data-fm="Aditya Birla Pension" onclick="selectFM(this)">Aditya Birla</div>
+                <div class="fm-card" data-fm="Axis Pension Fund" onclick="selectFM(this)">Axis</div>
+                <div class="fm-card" data-fm="UTI Retirement Solutions" onclick="selectFM(this)">UTI</div>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Nominee name</label>
+            <div class="field-value empty" id="view-nominee">Not set</div>
+            <input type="text" id="edit-nominee" placeholder="Full name of nominee" style="display:none"/>
+          </div>
+          <div class="field">
+            <label>Contribution start date</label>
+            <div class="field-value empty" id="view-start-date">Not set</div>
+            <input type="date" id="edit-start-date" style="display:none"/>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Balances & Contributions -->
+    <div class="section-card">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Balances &amp; contributions</div>
+          <div class="section-sub">Update your corpus and contribution amounts</div>
+        </div>
+        <button class="edit-btn" id="edit-balance-btn" onclick="toggleEdit('balance')">Edit</button>
+      </div>
+      <div class="section-body">
+        <div class="fields-grid">
+          <div class="field">
+            <label>Tier I balance (₹)</label>
+            <div class="field-value" id="view-tier1">₹0</div>
+            <input type="number" id="edit-tier1" placeholder="e.g. 50000" min="0" style="display:none"/>
+          </div>
+          <div class="field">
+            <label>Tier II balance (₹)</label>
+            <div class="field-value" id="view-tier2">₹0</div>
+            <input type="number" id="edit-tier2" placeholder="e.g. 10000" min="0" style="display:none"/>
+          </div>
+          <div class="field">
+            <label>Monthly contribution (₹)</label>
+            <div class="field-value" id="view-monthly">₹0 / month</div>
+            <input type="number" id="edit-monthly" placeholder="e.g. 2000" min="500" style="display:none"/>
+          </div>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Auto-debit enabled</div>
+            <div class="toggle-sub">Contributions are automatically deducted each month</div>
+          </div>
+          <label class="toggle-wrap">
+            <input type="checkbox" id="toggle-autodebit" onchange="markDirty()"/>
+            <div class="toggle-slider"></div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Asset Allocation -->
+    <div class="section-card">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Asset allocation</div>
+          <div class="section-sub">How your NPS corpus is invested across asset classes</div>
+        </div>
+        <button class="edit-btn" id="edit-alloc-btn" onclick="toggleEdit('alloc')">Edit</button>
+      </div>
+      <div class="section-body">
+
+        <!-- View mode -->
+        <div id="view-alloc">
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div class="alloc-row">
+              <div class="alloc-label">Equity (E) — stocks</div>
+              <div class="alloc-track"><div class="alloc-fill" id="bar-equity" style="background:#F26522;width:0%"></div></div>
+              <div class="alloc-pct" id="pct-equity">0%</div>
+            </div>
+            <div class="alloc-row">
+              <div class="alloc-label">Corporate bonds (C)</div>
+              <div class="alloc-track"><div class="alloc-fill" id="bar-corp" style="background:#2E5F8A;width:0%"></div></div>
+              <div class="alloc-pct" id="pct-corp">0%</div>
+            </div>
+            <div class="alloc-row">
+              <div class="alloc-label">Govt securities (G)</div>
+              <div class="alloc-track"><div class="alloc-fill" id="bar-govt" style="background:#9FB3C8;width:0%"></div></div>
+              <div class="alloc-pct" id="pct-govt">0%</div>
+            </div>
+          </div>
+          <div style="margin-top:12px;padding:10px 14px;background:var(--bg);border-radius:8px;font-size:12px;color:var(--muted);">
+            ℹ️ Equity allocation decreases automatically with age under Auto Choice. Maximum allowed equity is 75% under age 35.
+          </div>
+        </div>
+
+        <!-- Edit mode -->
+        <div id="edit-alloc" style="display:none">
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div class="alloc-row">
+              <div class="alloc-label">Equity (E) %</div>
+              <input type="number" class="field input alloc-input" id="input-equity" min="0" max="75" placeholder="0" oninput="liveAlloc()"/>
+            </div>
+            <div class="alloc-row">
+              <div class="alloc-label">Corporate bonds (C) %</div>
+              <input type="number" class="field input alloc-input" id="input-corp" min="0" max="100" placeholder="0" oninput="liveAlloc()"/>
+            </div>
+            <div class="alloc-row">
+              <div class="alloc-label">Govt securities (G) %</div>
+              <input type="number" class="field input alloc-input" id="input-govt" min="0" max="100" placeholder="0" oninput="liveAlloc()"/>
+            </div>
+          </div>
+          <div id="alloc-warning" style="display:none;margin-top:10px;padding:10px 14px;background:var(--amber-bg);border-radius:8px;font-size:12px;color:var(--amber);">
+            Allocations must total 100%.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = 'http://localhost:5000';
+let npsData = {};
+let dirty = false;
+let selectedFundManager = '';
+let editStates = { account: false, balance: false, alloc: false };
+
+// ── Load data ─────────────────────────────────────────────────
+async function loadData() {
+  const token = localStorage.getItem('futureyou_token');
+  let user = {};
+
+  if (token) {
+    try {
+      const res = await fetch(`${API_BASE}/api/users/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        user = await res.json();
+        localStorage.setItem('futureyou_user', JSON.stringify(user));
+      }
+    } catch (e) {}
+  }
+
+  // Fallback to localStorage
+  if (!user?.name) {
+    try { user = JSON.parse(localStorage.getItem('futureyou_user') || '{}'); } catch {}
+  }
+
+  npsData = user?.nps || {};
+
+  // Sidebar
+  document.getElementById('sidebar-nm').textContent = user?.name || 'You';
+  document.getElementById('sidebar-av').textContent = (user?.name || 'U')[0].toUpperCase();
+
+  renderAll(user);
+}
+
+// ── Render ────────────────────────────────────────────────────
+function renderAll(user) {
+  const nps = user?.nps || {};
+  const fmt = (n) => n >= 1e7 ? '₹'+(n/1e7).toFixed(1)+' Cr' : n >= 1e5 ? '₹'+(n/1e5).toFixed(1)+' L' : '₹'+(n||0).toLocaleString('en-IN');
+
+  // Status banner
+  const hasPran = !!nps.pran_number;
+  const banner = document.getElementById('status-banner');
+  banner.className = 'status-banner ' + (hasPran ? 'has-account' : 'no-account');
+  document.getElementById('status-icon').textContent = hasPran ? '✅' : '⚠️';
+  document.getElementById('status-title').textContent = hasPran ? 'NPS account linked — PRAN ' + nps.pran_number : 'No NPS account linked yet';
+  document.getElementById('status-sub').textContent = hasPran
+    ? 'Your account details are shown below. Keep them up to date.'
+    : 'Enter your PRAN below to link your existing NPS account, or open a new one.';
+  document.getElementById('open-nps-btn').style.display = hasPran ? 'none' : 'block';
+
+  // Stat chips
+  document.getElementById('chip-tier1').textContent = fmt(nps.tier1_balance || 0);
+  document.getElementById('chip-tier2').textContent = fmt(nps.tier2_balance || 0);
+  document.getElementById('chip-contrib').textContent = nps.monthly_contribution ? fmt(nps.monthly_contribution) + ' / mo' : '₹0';
+  document.getElementById('chip-contrib-sub').textContent = nps.auto_debit_enabled ? 'Auto-debit active ✓' : 'Set up auto-debit';
+
+  // Account details - view
+  document.getElementById('view-pran').textContent = nps.pran_number || '';
+  document.getElementById('view-pran').className = 'field-value' + (nps.pran_number ? '' : ' empty');
+  if (!nps.pran_number) document.getElementById('view-pran').textContent = 'Not linked';
+
+  const accountTypeLabels = { govt:'Government', corporate:'Corporate NPS', all_citizen:'All Citizen Model' };
+  document.getElementById('view-account-type').textContent = accountTypeLabels[nps.account_type] || '—';
+  document.getElementById('view-fund-manager').textContent = nps.fund_manager || '—';
+  document.getElementById('view-nominee').textContent = nps.nominee_name || '';
+  document.getElementById('view-nominee').className = 'field-value' + (nps.nominee_name ? '' : ' empty');
+  if (!nps.nominee_name) document.getElementById('view-nominee').textContent = 'Not set';
+
+  const startDate = nps.contribution_start_date ? new Date(nps.contribution_start_date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '';
+  document.getElementById('view-start-date').textContent = startDate || '';
+  document.getElementById('view-start-date').className = 'field-value' + (startDate ? '' : ' empty');
+  if (!startDate) document.getElementById('view-start-date').textContent = 'Not set';
+
+  // Balance view
+  document.getElementById('view-tier1').textContent = fmt(nps.tier1_balance || 0);
+  document.getElementById('view-tier2').textContent = fmt(nps.tier2_balance || 0);
+  document.getElementById('view-monthly').textContent = nps.monthly_contribution ? fmt(nps.monthly_contribution) + ' / month' : '₹0 / month';
+  document.getElementById('toggle-autodebit').checked = !!nps.auto_debit_enabled;
+  document.getElementById('toggle-autodebit').disabled = true;
+
+  // Allocation view
+  const eq = nps.asset_allocation_equity ?? 50;
+  const cr = nps.asset_allocation_debt   ?? 30;
+  const gv = 100 - eq - cr;
+  setTimeout(() => {
+    document.getElementById('bar-equity').style.width = eq + '%';
+    document.getElementById('bar-corp').style.width   = cr + '%';
+    document.getElementById('bar-govt').style.width   = Math.max(0,gv) + '%';
+  }, 200);
+  document.getElementById('pct-equity').textContent = eq + '%';
+  document.getElementById('pct-corp').textContent   = cr + '%';
+  document.getElementById('pct-govt').textContent   = Math.max(0,gv) + '%';
+
+  selectedFundManager = nps.fund_manager || '';
+}
+
+// ── Edit toggles ──────────────────────────────────────────────
+function toggleEdit(section) {
+  editStates[section] = !editStates[section];
+  const on = editStates[section];
+  const btn = document.getElementById(`edit-${section}-btn`);
+  btn.textContent = on ? 'Done' : 'Edit';
+  btn.className = 'edit-btn' + (on ? ' active' : '');
+
+  if (section === 'account') {
+    toggle('view-pran',         !on); toggle('edit-pran',          on);
+    toggle('view-account-type', !on); toggle('edit-account-type',  on);
+    toggle('view-fund-manager', !on); toggle('edit-fund-manager',  on);
+    toggle('view-nominee',      !on); toggle('edit-nominee',       on);
+    toggle('view-start-date',   !on); toggle('edit-start-date',    on);
+
+    if (on) {
+      document.getElementById('edit-pran').value         = npsData.pran_number || '';
+      document.getElementById('edit-account-type').value = npsData.account_type || '';
+      document.getElementById('edit-nominee').value      = npsData.nominee_name || '';
+      if (npsData.contribution_start_date) {
+        document.getElementById('edit-start-date').value = npsData.contribution_start_date.slice(0,10);
+      }
+      // Highlight selected FM
+      document.querySelectorAll('.fm-card').forEach(c => {
+        c.classList.toggle('selected', c.dataset.fm === selectedFundManager);
+      });
+    }
+  }
+
+  if (section === 'balance') {
+    const fields = ['tier1','tier2','monthly'];
+    fields.forEach(f => {
+      toggle(`view-${f}`, !on);
+      const inp = document.getElementById(`edit-${f}`);
+      inp.style.display = on ? 'block' : 'none';
+    });
+    document.getElementById('toggle-autodebit').disabled = !on;
+    if (on) {
+      document.getElementById('edit-tier1').value   = npsData.tier1_balance || '';
+      document.getElementById('edit-tier2').value   = npsData.tier2_balance || '';
+      document.getElementById('edit-monthly').value = npsData.monthly_contribution || '';
+    }
+  }
+
+  if (section === 'alloc') {
+    toggle('view-alloc', !on);
+    document.getElementById('edit-alloc').style.display = on ? 'block' : 'none';
+    if (on) {
+      document.getElementById('input-equity').value = npsData.asset_allocation_equity ?? 50;
+      document.getElementById('input-corp').value   = npsData.asset_allocation_debt   ?? 30;
+      document.getElementById('input-govt').value   = 100 - (npsData.asset_allocation_equity??50) - (npsData.asset_allocation_debt??30);
+    }
+  }
+
+  if (on) markDirty();
+}
+
+function toggle(id, show) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = show ? '' : 'none';
+}
+
+function selectFM(card) {
+  document.querySelectorAll('.fm-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  selectedFundManager = card.dataset.fm;
+  markDirty();
+}
+
+function liveAlloc() {
+  const eq = parseInt(document.getElementById('input-equity').value) || 0;
+  const cr = parseInt(document.getElementById('input-corp').value)   || 0;
+  const gv = parseInt(document.getElementById('input-govt').value)   || 0;
+  const total = eq + cr + gv;
+  document.getElementById('alloc-warning').style.display = total !== 100 ? 'block' : 'none';
+  markDirty();
+}
+
+function markDirty() {
+  dirty = true;
+  document.getElementById('save-btn').className = 'save-btn show';
+}
+
+// ── Save ──────────────────────────────────────────────────────
+async function saveAll() {
+  const btn = document.getElementById('save-btn');
+  btn.textContent = 'Saving...';
+  btn.className = 'save-btn show saving';
+
+  // Collect all fields whether in edit mode or not
+  const updates = {};
+
+  // Account
+  const pran = document.getElementById('edit-pran').value.trim();
+  if (pran) updates.pran_number = pran;
+  const accType = document.getElementById('edit-account-type').value;
+  if (accType) updates.account_type = accType;
+  if (selectedFundManager) updates.fund_manager = selectedFundManager;
+  const nominee = document.getElementById('edit-nominee').value.trim();
+  if (nominee) updates.nominee_name = nominee;
+  const startDate = document.getElementById('edit-start-date').value;
+  if (startDate) updates.contribution_start_date = startDate;
+
+  // Balance
+  const tier1 = parseInt(document.getElementById('edit-tier1').value);
+  const tier2 = parseInt(document.getElementById('edit-tier2').value);
+  const monthly = parseInt(document.getElementById('edit-monthly').value);
+  if (!isNaN(tier1))   updates.tier1_balance = tier1;
+  if (!isNaN(tier2))   updates.tier2_balance = tier2;
+  if (!isNaN(monthly)) updates.monthly_contribution = monthly;
+  updates.auto_debit_enabled = document.getElementById('toggle-autodebit').checked;
+
+  // Allocation
+  const eq = parseInt(document.getElementById('input-equity').value);
+  const cr = parseInt(document.getElementById('input-corp').value);
+  if (!isNaN(eq) && !isNaN(cr) && eq + cr <= 100) {
+    updates.asset_allocation_equity = eq;
+    updates.asset_allocation_debt   = cr;
+  }
+
+  // Validate PRAN format
+  if (updates.pran_number && !/^\d{12}$/.test(updates.pran_number)) {
+    showToast('PRAN must be a 12-digit number', 'error');
+    btn.textContent = 'Save changes'; btn.className = 'save-btn show';
+    return;
+  }
+
+  // Merge into local npsData
+  Object.assign(npsData, updates);
+
+  // API call
+  const token = localStorage.getItem('futureyou_token');
+  let saved = false;
+  if (token) {
+    try {
+      const res = await fetch(`${API_BASE}/api/users/me/nps`, {
+        method: 'PATCH',
+        headers: { 'Content-Type':'application/json', Authorization:`Bearer ${token}` },
+        body: JSON.stringify(updates),
+      });
+      if (res.ok) saved = true;
+    } catch (e) {}
+  }
+
+  // Update localStorage too
+  try {
+    const stored = JSON.parse(localStorage.getItem('futureyou_user') || '{}');
+    stored.nps = { ...(stored.nps||{}), ...updates };
+    localStorage.setItem('futureyou_user', JSON.stringify(stored));
+    saved = true;
+  } catch {}
+
+  // Close all edit sections
+  ['account','balance','alloc'].forEach(s => {
+    if (editStates[s]) toggleEdit(s);
+  });
+
+  // Re-render with new data
+  const stored = JSON.parse(localStorage.getItem('futureyou_user') || '{}');
+  renderAll(stored);
+
+  dirty = false;
+  btn.className = 'save-btn';
+  btn.textContent = 'Save changes';
+  showToast(saved ? 'Changes saved ✓' : 'Saved locally (API offline)', saved ? 'success' : '');
+}
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' '+type : '');
+  setTimeout(() => { t.className = 'toast'; }, 3000);
+}
+
+// Warn before leaving with unsaved changes
+window.addEventListener('beforeunload', e => {
+  if (dirty) { e.preventDefault(); e.returnValue = ''; }
+});
+
+loadData();
+</script>
+</body>
+</html>

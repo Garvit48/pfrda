@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FutureYou — Games & Learn</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --orange: #F26522; --navy: #1A3A5C; --mid: #2E5F8A;
+  --bg: #F4F6F9; --surface: #fff; --border: #E2E8F0;
+  --text: #1A3A5C; --muted: #64829A; --sidebar-w: 240px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); display:flex; min-height:100vh; }
+
+.sidebar { width:var(--sidebar-w); background:var(--navy); min-height:100vh; position:fixed; top:0; left:0; bottom:0; display:flex; flex-direction:column; }
+.sidebar-logo { padding:28px 24px 24px; display:flex; align-items:center; gap:10px; border-bottom:1px solid rgba(255,255,255,0.08); }
+.logo-icon { width:36px; height:36px; background:var(--orange); border-radius:10px; display:flex; align-items:center; justify-content:center; font-family:'Instrument Serif',serif; font-size:18px; color:white; }
+.logo-text { font-family:'Instrument Serif',serif; font-size:20px; color:white; }
+.logo-text span { color:#F9915A; }
+.sidebar-nav { flex:1; padding:20px 12px; display:flex; flex-direction:column; gap:4px; }
+.nav-label { font-size:10px; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.3); padding:16px 12px 8px; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; color:rgba(255,255,255,0.6); font-size:14px; cursor:pointer; transition:all 0.15s; text-decoration:none; }
+.nav-item:hover { background:rgba(255,255,255,0.07); color:white; }
+.nav-item.active { background:rgba(242,101,34,0.2); color:white; }
+.nav-dot { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.2); flex-shrink:0; }
+.nav-item.active .nav-dot { background:var(--orange); }
+
+.main { margin-left:var(--sidebar-w); flex:1; }
+.topbar { background:var(--surface); border-bottom:1px solid var(--border); padding:0 32px; height:64px; display:flex; align-items:center; justify-content:space-between; }
+.topbar-title { font-family:'Instrument Serif',serif; font-size:20px; }
+.back-link { font-size:13px; color:var(--muted); text-decoration:none; display:flex; align-items:center; gap:6px; transition:color 0.15s; }
+.back-link:hover { color:var(--navy); }
+
+.content { padding:40px 32px; display:flex; flex-direction:column; gap:32px; }
+
+.page-header { display:flex; flex-direction:column; gap:8px; }
+.page-title { font-family:'Instrument Serif',serif; font-size:36px; color:var(--navy); }
+.page-sub { font-size:15px; color:var(--muted); }
+
+.xp-bar-card { background:var(--navy); border-radius:14px; padding:20px 24px; display:flex; align-items:center; gap:24px; }
+.xp-left { flex:1; }
+.xp-label { font-size:12px; color:rgba(255,255,255,0.45); margin-bottom:6px; }
+.xp-track { height:8px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden; }
+.xp-fill { height:100%; background:linear-gradient(90deg,var(--orange),#F9915A); border-radius:4px; width:35%; transition:width 1s ease; }
+.xp-right { text-align:right; }
+.xp-value { font-family:'Instrument Serif',serif; font-size:28px; color:white; }
+.xp-caption { font-size:11px; color:rgba(255,255,255,0.35); }
+
+.games-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+
+.game-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; cursor:pointer; text-decoration:none; transition:all 0.2s; display:flex; flex-direction:column; }
+.game-card:hover { transform:translateY(-3px); box-shadow:0 8px 32px rgba(26,58,92,0.12); border-color:var(--orange); }
+.game-card-banner { height:140px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
+.game-card-banner .banner-icon { font-size:52px; z-index:1; filter:drop-shadow(0 4px 12px rgba(0,0,0,0.2)); }
+.game-card-banner::after { content:''; position:absolute; inset:0; opacity:0.15; }
+.banner-crossword { background:linear-gradient(135deg,#1A3A5C,#2E5F8A); }
+.banner-truths    { background:linear-gradient(135deg,#7C3AED,#A855F7); }
+.banner-quiz      { background:linear-gradient(135deg,#B45309,#F59E0B); }
+
+.game-card-body { padding:20px; flex:1; display:flex; flex-direction:column; gap:8px; }
+.game-name { font-size:17px; font-weight:500; color:var(--text); }
+.game-desc { font-size:13px; color:var(--muted); line-height:1.5; flex:1; }
+.game-meta { display:flex; align-items:center; justify-content:space-between; margin-top:8px; }
+.game-xp { font-size:12px; font-weight:500; color:var(--orange); background:rgba(242,101,34,0.08); padding:3px 10px; border-radius:20px; }
+.game-time { font-size:12px; color:var(--muted); }
+.game-arrow { font-size:18px; color:var(--muted); transition:transform 0.2s; }
+.game-card:hover .game-arrow { transform:translate(2px,-2px); color:var(--orange); }
+
+.facts-section { display:flex; flex-direction:column; gap:12px; }
+.facts-title { font-size:13px; font-weight:500; letter-spacing:0.07em; text-transform:uppercase; color:var(--muted); }
+.facts-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.fact-pill { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; font-size:13px; color:var(--text); line-height:1.5; }
+.fact-pill strong { color:var(--orange); }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+.content > * { animation:fadeUp 0.4s ease both; }
+.content > *:nth-child(1){animation-delay:0.05s}
+.content > *:nth-child(2){animation-delay:0.1s}
+.content > *:nth-child(3){animation-delay:0.15s}
+.content > *:nth-child(4){animation-delay:0.2s}
+
+@media(max-width:900px){ .games-grid{grid-template-columns:1fr} .facts-row{grid-template-columns:1fr} .sidebar{display:none} .main{margin-left:0} }
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="logo-icon">F</div><div class="logo-text">Future<span>You</span></div></div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Main</div>
+    <a class="nav-item" href="futureyou_dashboard.html"><div class="nav-dot"></div> Dashboard</a>
+    <a class="nav-item" href="#"><div class="nav-dot"></div> My NPS Account</a>
+    <a class="nav-item" href="#"><div class="nav-dot"></div> Contributions</a>
+    <a class="nav-item" href="#"><div class="nav-dot"></div> Tax Benefits</a>
+    <div class="nav-label">Tools</div>
+    <a class="nav-item active" href="#"><div class="nav-dot"></div> Games &amp; Learn</a>
+    <a class="nav-item" href="#"><div class="nav-dot"></div> Talk to Future Self</a>
+    <a class="nav-item" href="#"><div class="nav-dot"></div> FAQ</a>
+    <div class="nav-label">Account</div>
+    <a class="nav-item" href="#"><div class="nav-dot"></div> Complete Profile</a>
+  </nav>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-title">Games &amp; Learn</div>
+    <a class="back-link" href="futureyou_dashboard.html">&#8592; Back to dashboard</a>
+  </div>
+
+  <div class="content">
+    <div class="page-header">
+      <div class="page-title">Learn while you play</div>
+      <div class="page-sub">Every game teaches you something real about NPS. Earn XP and improve your readiness score.</div>
+    </div>
+
+    <div class="xp-bar-card">
+      <div class="xp-left">
+        <div class="xp-label">Your XP progress</div>
+        <div class="xp-track"><div class="xp-fill" id="xp-fill"></div></div>
+      </div>
+      <div class="xp-right">
+        <div class="xp-value" id="xp-val">350 XP</div>
+        <div class="xp-caption">Next level at 500 XP</div>
+      </div>
+    </div>
+
+    <div class="games-grid">
+      <a class="game-card" href="futureyou_crossword.html">
+        <div class="game-card-banner banner-crossword"><div class="banner-icon">&#9997;</div></div>
+        <div class="game-card-body">
+          <div class="game-name">NPS Crossword</div>
+          <div class="game-desc">Fill in NPS terms across and down. Two puzzle variants — each clue is a real NPS fact you'll actually remember.</div>
+          <div class="game-meta">
+            <span class="game-xp">+50 XP</span>
+            <span class="game-time">5–8 min</span>
+            <span class="game-arrow">&#8599;</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="game-card" href="futureyou_twotruths.html">
+        <div class="game-card-banner banner-truths"><div class="banner-icon">&#129300;</div></div>
+        <div class="game-card-body">
+          <div class="game-name">Two Truths, One Lie</div>
+          <div class="game-desc">Three statements about NPS. Two are facts, one is fiction. Spot the lie before time runs out.</div>
+          <div class="game-meta">
+            <span class="game-xp">+40 XP</span>
+            <span class="game-time">3–5 min</span>
+            <span class="game-arrow">&#8599;</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="game-card" href="futureyou_quiz.html">
+        <div class="game-card-banner banner-quiz"><div class="banner-icon">&#128218;</div></div>
+        <div class="game-card-body">
+          <div class="game-name">NPS Knowledge Quiz</div>
+          <div class="game-desc">10 randomised questions from a bank of NPS facts. Test yourself on tax benefits, rules, and withdrawal norms.</div>
+          <div class="game-meta">
+            <span class="game-xp">+60 XP</span>
+            <span class="game-time">5–7 min</span>
+            <span class="game-arrow">&#8599;</span>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="facts-section">
+      <div class="facts-title">Did you know?</div>
+      <div class="facts-row">
+        <div class="fact-pill">NPS charges only <strong>0.09% p.a.</strong> in fund management fees — the cheapest pension product in India.</div>
+        <div class="fact-pill">You can withdraw <strong>60% of your corpus tax-free</strong> at retirement. Only the 40% used for annuity is taxable.</div>
+        <div class="fact-pill">The <strong>extra ₹50,000 deduction</strong> under 80CCD(1B) is available to all NPS subscribers — salaried or self-employed.</div>
+      </div>
+    </div>
+  </div>
+</main>
+<script>
+const user = JSON.parse(localStorage.getItem('futureyou_user') || '{}');
+const xp = user?.gamification?.xp_total || 350;
+document.getElementById('xp-val').textContent = xp + ' XP';
+const pct = Math.min((xp / 500) * 100, 100);
+setTimeout(() => { document.getElementById('xp-fill').style.width = pct + '%'; }, 300);
+</script>
+</body>
+</html>
