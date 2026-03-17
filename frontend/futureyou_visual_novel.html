@@ -671,13 +671,23 @@
                 (inp.options || []).forEach(o => {
                     const btn = document.createElement('button'); btn.className = 'mcq-opt'; btn.textContent = o.label;
                     btn.onclick = () => {
-                        if (inputAnswered) return;
-                        userData[inp.key] = o.value; inputAnswered = true;
+                        if (inputAnswered && !inp.isQuiz) {
+                            // Allow re-selection: unmark previous, update value
+                            wrap.querySelectorAll('.mcq-opt').forEach(b => {
+                                b.classList.remove('selected');
+                                b.disabled = false;
+                            });
+                            inputAnswered = false;
+                        }
+                        if (inputAnswered) return; // still block quiz re-answers
+                        userData[inp.key] = o.value;
+                        inputAnswered = true;
                         if (inp.isQuiz) {
                             btn.classList.add(o.correct ? 'correct' : 'wrong');
-                            const msg = o.correct ? inp.explanation.correct : inp.explanation.wrong;
-                            setTimeout(() => { document.getElementById('dialogue-text').textContent = msg; }, 300);
-                        } else { btn.classList.add('selected'); }
+                            setTimeout(() => { document.getElementById('dialogue-text').textContent = o.correct ? inp.explanation.correct : inp.explanation.wrong; }, 300);
+                        } else {
+                            btn.classList.add('selected');
+                        }
                         wrap.querySelectorAll('.mcq-opt').forEach(b => { b.disabled = true; });
                         updateNextButton(scene);
                     };
@@ -715,6 +725,15 @@
 
         // ── REGISTRATION & REDIRECT ──────────────────────────────
 
+        function incomeToRange(monthly) {
+            const n = parseInt(monthly) || 0;
+            if (n < 25000)       return 'under25k';
+            if (n < 50000)       return '25k-50k';
+            if (n < 100000)      return '50k-1L';
+            if (n < 200000)      return '1L-2L';
+            return 'above2L';
+        }
+
         async function endNovel() {
             document.getElementById('fade-overlay').classList.add('active');
             const readinessScore = computeReadinessScore(userData);
@@ -725,7 +744,7 @@
                 name: userData.confirmedName || userName,
                 age: parseInt(userData.age) || 25,
                 employment_type: userData.employment,
-                income_range: userData.monthlyIncome,
+                income_range: incomeToRange(userData.monthlyIncome),
                 nps_knowledge_level: userData.npsStatus,
                 tax_fact_known: userData.taxFactKnown === 'yes',
                 tax_regime: userData.taxRegime,

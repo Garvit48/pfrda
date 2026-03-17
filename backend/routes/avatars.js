@@ -56,6 +56,14 @@ const POSE_INSTRUCTIONS = {
   smiling:  'make this person look 60 years old with a warm genuine smile and kind eyes, photorealistic, keep the same person',
 };
 
+const DEFAULT_FALLBACKS = {
+  shocked: path.join(__dirname, '..', 'assets', 'default', 'sup.png'),
+  talking: path.join(__dirname, '..', 'assets', 'default', 'tal.png'),
+  thinking: path.join(__dirname, '..', 'assets', 'default', 'thoug.png'),
+  smiling: path.join(__dirname, '..', 'assets', 'default', 'smil.png'),
+};
+
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
@@ -150,9 +158,10 @@ router.post('/generate', upload.single('photo'), async (req, res) => {
     // ── No token / token placeholder → use original photo as fallback ──────────
     if (!HF_TOKEN || HF_TOKEN === 'hf_YOUR_TOKEN_HERE') {
       console.log(`[Avatars] No HF token — copying original as fallback for pose: ${pose}`);
-      const fallbackPath = path.join(folderPath, `${pose}.${originalExt}`);
-      fs.copyFileSync(originalPath, fallbackPath);
-      avatarUrlsForResponse[`${pose}_url`] = `/assets/${userId}/${pose}.${originalExt}`;
+      const fallbackPath = path.join(folderPath, `${pose}.png`);
+      fs.copyFileSync(DEFAULT_FALLBACKS[pose], fallbackPath);
+
+      avatarUrlsForResponse[`${pose}_url`] = `/assets/${userId}/${pose}.png`;
       continue;
     }
 
@@ -174,11 +183,22 @@ router.post('/generate', upload.single('photo'), async (req, res) => {
       console.log(`[Avatars] ✓ Pose "${pose}" generated`);
 
     } catch (err) {
-      // Single pose failed → fall back to original photo for that pose
-      console.warn(`[Avatars] Pose "${pose}" failed (${err.message}), using original as fallback`);
-      const fallbackPath = path.join(folderPath, `${pose}.${originalExt}`);
-      fs.copyFileSync(originalPath, fallbackPath);
-      avatarUrlsForResponse[`${pose}_url`] = `/assets/${userId}/${pose}.${originalExt}`;
+      console.warn(`[Avatars] Pose "${pose}" failed (${err.message}), using default fallback`);
+
+      try {
+        const fallbackPath = path.join(folderPath, `${pose}.png`);
+        fs.copyFileSync(DEFAULT_FALLBACKS[pose], fallbackPath);
+
+        avatarUrlsForResponse[`${pose}_url`] = `/assets/${userId}/${pose}.png`;
+
+      } catch (fallbackErr) {
+        console.warn(`[Avatars] Default fallback ALSO failed, using original`);
+
+        const fallbackPath = path.join(folderPath, `${pose}.${originalExt}`);
+        fs.copyFileSync(originalPath, fallbackPath);
+
+        avatarUrlsForResponse[`${pose}_url`] = `/assets/${userId}/${pose}.${originalExt}`;
+      }
     }
   }
 
