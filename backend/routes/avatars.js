@@ -1,148 +1,220 @@
-const router = require('express').Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const axios = require('axios');
-const FormData = require('form-data');
-const { v4: uuidv4 } = require('uuid');
-const User = require('../models/User');
+/**
+ * routes/avatars.js
+ *
+ * Avatar generation using Hugging Face Inference API — FREE tier.
+ *
+ * ─── MODEL USED ──────────────────────────────────────────────────────────────
+ *
+ *  PRIMARY   timbrooks/instruct-pix2pix  (HF Inference API — free with token)
+ *    Takes the uploaded photo + a text instruction and returns a transformed
+ *    image. We send 4 instructions (one per pose) to produce aged versions
+ *    of the person in different expressions.
+ *    .env:  HF_API_TOKEN=hf_xxxxxxxxxxxxxxxxxxxx
+ *
+ *  FALLBACK  The original uploaded photo is copied as a stand-in for every
+ *    pose so the rest of the app works end-to-end even without a token.
+ *
+ * ─── POSE INSTRUCTIONS ───────────────────────────────────────────────────────
+ *  shocked:  make this person look 60 years old with wide shocked eyes
+ *  talking:  make this person look 60 years old, mouth slightly open, speaking
+ *  thinking: make this person look 60 years old, thoughtful expression
+ *  smiling:  make this person look 60 years old with a warm genuine smile
+ */
 
-// Multer — store uploaded photo in memory (we forward it to the image gen API)
+const router  = require('express').Router();
+const multer  = require('multer');
+const path    = require('path');
+const fs      = require('fs');
+const axios   = require('axios');
+const { v4: uuidv4 } = require('uuid');
+
+// ─── Multer ───────────────────────────────────────────────────────────────────
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!allowed.includes(file.mimetype)) {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) {
       return cb(new Error('Only JPEG, PNG, and WebP images are allowed'));
     }
     cb(null, true);
   },
 });
 
+// ─── Constants ────────────────────────────────────────────────────────────────
 const POSES = ['shocked', 'talking', 'thinking', 'smiling'];
 
-// POST /api/avatars/generate
-// Body: multipart/form-data with field "photo"
-// Returns: { userId, avatars: { shocked_url, talking_url, thinking_url, smiling_url, folder_path } }
+// HF Inference API — instruct-pix2pix (image-to-image with text instruction)
+// This endpoint accepts: { inputs: <base64 image>, parameters: { prompt } }
+// and returns a binary image blob.
+const HF_MODEL_URL = 'https://api-inference.huggingface.co/models/timbrooks/instruct-pix2pix';
+
+// Pose-specific aging instructions
+const POSE_INSTRUCTIONS = {
+  shocked:  'make this person look 60 years old with wide shocked eyes and a surprised expression, photorealistic, keep the same person',
+  talking:  'make this person look 60 years old, mouth slightly open as if speaking, neutral relaxed expression, photorealistic, keep the same person',
+  thinking: 'make this person look 60 years old with a thoughtful expression, looking slightly upward, photorealistic, keep the same person',
+  smiling:  'make this person look 60 years old with a warm genuine smile and kind eyes, photorealistic, keep the same person',
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Call HF instruct-pix2pix for a single pose.
+ * Returns a Buffer of the generated image.
+ */
+async function callHFPix2Pix(imageBuffer, mimeType, instruction, token) {
+  // HF Inference API for image-to-image:
+  // POST with the image as base64 in the JSON body under "inputs",
+  // and the edit instruction under "parameters.prompt".
+  const base64Image = imageBuffer.toString('base64');
+
+  const response = await axios.post(
+    HF_MODEL_URL,
+    {
+      inputs: base64Image,
+      parameters: {
+        prompt:               instruction,
+        num_inference_steps:  20,        // lower = faster, higher = better quality
+        image_guidance_scale: 1.5,       // how closely to follow original image
+        guidance_scale:       7.5,       // how closely to follow text prompt
+      },
+    },
+    {
+      headers: {
+        Authorization:  `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Accept:         'image/jpeg',
+      },
+      responseType: 'arraybuffer',
+      timeout: 90_000,  // pix2pix can take 30-60s on free tier
+    }
+  );
+
+  if (response.status !== 200) {
+    throw new Error(`HF returned status ${response.status}`);
+  }
+
+  // HF may return a JSON error even with 200 — check content-type
+  const contentType = response.headers['content-type'] || '';
+  if (contentType.includes('application/json')) {
+    const json = JSON.parse(Buffer.from(response.data).toString('utf8'));
+    // Handle model loading (503 with estimated_time)
+    if (json.error) throw new Error(json.error);
+  }
+
+  return Buffer.from(response.data);
+}
+
+/**
+ * Poll until the model is loaded. HF returns 503 with { estimated_time }
+ * while the model is cold-starting. We retry up to maxAttempts times.
+ */
+async function callWithRetry(imageBuffer, mimeType, instruction, token, maxAttempts = 3) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await callHFPix2Pix(imageBuffer, mimeType, instruction, token);
+    } catch (err) {
+      const isModelLoading = err.message?.toLowerCase().includes('loading') ||
+                             err.response?.status === 503;
+      if (isModelLoading && attempt < maxAttempts) {
+        const waitMs = (err.response?.data?.estimated_time || 20) * 1000;
+        console.log(`[Avatars] Model loading, waiting ${Math.round(waitMs / 1000)}s before retry ${attempt + 1}/${maxAttempts}...`);
+        await new Promise(r => setTimeout(r, Math.min(waitMs, 30_000)));
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
+// ─── POST /api/avatars/generate ───────────────────────────────────────────────
 router.post('/generate', upload.single('photo'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'Photo is required' });
   }
 
-  // Generate a userId upfront — this becomes the session identifier
-  // carried through the visual novel and sent with /register at the end
-  const userId = uuidv4();
-
-  // Create assets folder for this user
+  const userId     = uuidv4();
   const folderPath = path.join(__dirname, '..', 'assets', userId);
   fs.mkdirSync(folderPath, { recursive: true });
 
-  // Save the original photo
-  const originalExt = req.file.mimetype === 'image/png' ? 'png' : 'jpg';
+  const originalExt  = req.file.mimetype === 'image/png' ? 'png' : 'jpg';
   const originalPath = path.join(folderPath, `original.${originalExt}`);
   fs.writeFileSync(originalPath, req.file.buffer);
 
-  // ── Call external image generation API ──────────────────────────
-  // Replace the block below with your actual provider's SDK/API call.
-  // The structure shown works for REST APIs that accept a base image
-  // and a pose prompt, and return an image URL or binary.
-  //
-  // Providers to consider:
-  //   • Replicate  — replicate.com/docs  (returns URL after polling)
-  //   • FAL.ai     — fal.ai/docs         (fast, good face preservation)
-  //   • Stability AI — platform.stability.ai
-  //
-  // For now this is a STUB that saves placeholder paths so the rest
-  // of the app works end-to-end before the real API is integrated.
-  // ────────────────────────────────────────────────────────────────
-
-  const posePrompts = {
-    shocked:  'elderly version of this person, wide eyes, surprised expression, photorealistic',
-    talking:  'elderly version of this person, neutral relaxed expression, mouth slightly open as if speaking, photorealistic',
-    thinking: 'elderly version of this person, thoughtful expression, looking slightly upward, photorealistic',
-    smiling:  'elderly version of this person, warm genuine smile, kind eyes, photorealistic',
-  };
-
-  const avatarPaths = {};
   const avatarUrlsForResponse = {};
+  const HF_TOKEN = process.env.HF_API_TOKEN;
 
-  try {
-    for (const pose of POSES) {
-      // ── STUB: replace this if-block with real API call ──
-      if (!process.env.IMAGE_GEN_API_KEY || process.env.IMAGE_GEN_API_KEY === 'your_api_key_here') {
-        // No API key — save the original photo as a stand-in for each pose
-        const stubPath = path.join(folderPath, `${pose}.${originalExt}`);
-        fs.copyFileSync(originalPath, stubPath);
-        avatarPaths[pose] = stubPath;
-        avatarUrlsForResponse[`${pose}_url`] = `/assets/${userId}/${pose}.${originalExt}`;
-        continue;
-      }
+  // ── Generate 4 poses ────────────────────────────────────────────────────────
+  for (const pose of POSES) {
 
-      // ── REAL API CALL (example structure for a REST image gen API) ──
-      const form = new FormData();
-      form.append('image', req.file.buffer, {
-        filename: `photo.${originalExt}`,
-        contentType: req.file.mimetype,
-      });
-      form.append('prompt', posePrompts[pose]);
-      form.append('num_outputs', '1');
-
-      const response = await axios.post(process.env.IMAGE_GEN_API_URL, form, {
-        headers: {
-          ...form.getHeaders(),
-          Authorization: `Bearer ${process.env.IMAGE_GEN_API_KEY}`,
-        },
-        responseType: 'arraybuffer',
-        timeout: 60000, // 60s — image gen can be slow
-      });
-
-      const outputPath = path.join(folderPath, `${pose}.jpg`);
-      fs.writeFileSync(outputPath, response.data);
-      avatarPaths[pose] = outputPath;
-      avatarUrlsForResponse[`${pose}_url`] = `/assets/${userId}/${pose}.jpg`;
+    // ── No token / token placeholder → use original photo as fallback ──────────
+    if (!HF_TOKEN || HF_TOKEN === 'hf_YOUR_TOKEN_HERE') {
+      console.log(`[Avatars] No HF token — copying original as fallback for pose: ${pose}`);
+      const fallbackPath = path.join(folderPath, `${pose}.${originalExt}`);
+      fs.copyFileSync(originalPath, fallbackPath);
+      avatarUrlsForResponse[`${pose}_url`] = `/assets/${userId}/${pose}.${originalExt}`;
+      continue;
     }
 
-    const avatarResult = {
-      ...avatarUrlsForResponse,
-      folder_path: `/assets/${userId}`,
-      generated_at: new Date(),
-    };
+    // ── Call HF instruct-pix2pix ────────────────────────────────────────────────
+    try {
+      console.log(`[Avatars] Generating pose "${pose}" via HF instruct-pix2pix...`);
 
-    res.json({
-      success: true,
-      userId,           // frontend stores this, passes it to /register later
-      avatars: avatarResult,
-    });
+      const imgBuffer = await callWithRetry(
+        req.file.buffer,
+        req.file.mimetype,
+        POSE_INSTRUCTIONS[pose],
+        HF_TOKEN
+      );
 
-  } catch (err) {
-    // Clean up folder on failure so no orphaned directories pile up
-    fs.rmSync(folderPath, { recursive: true, force: true });
-    console.error('Avatar generation error:', err.message);
-    res.status(500).json({ error: 'Avatar generation failed', detail: err.message });
+      const outputPath = path.join(folderPath, `${pose}.jpg`);
+      fs.writeFileSync(outputPath, imgBuffer);
+      avatarUrlsForResponse[`${pose}_url`] = `/assets/${userId}/${pose}.jpg`;
+
+      console.log(`[Avatars] ✓ Pose "${pose}" generated`);
+
+    } catch (err) {
+      // Single pose failed → fall back to original photo for that pose
+      console.warn(`[Avatars] Pose "${pose}" failed (${err.message}), using original as fallback`);
+      const fallbackPath = path.join(folderPath, `${pose}.${originalExt}`);
+      fs.copyFileSync(originalPath, fallbackPath);
+      avatarUrlsForResponse[`${pose}_url`] = `/assets/${userId}/${pose}.${originalExt}`;
+    }
   }
+
+  const avatarResult = {
+    ...avatarUrlsForResponse,
+    folder_path:  `/assets/${userId}`,
+    generated_at: new Date(),
+  };
+
+  console.log(`[Avatars] All poses done for user ${userId}`);
+
+  return res.json({
+    success: true,
+    userId,
+    avatars: avatarResult,
+  });
 });
 
-// GET /api/avatars/:userId
-// Returns the avatar URLs for a given userId (used by dashboard / chatbot)
-router.get('/:userId', async (req, res) => {
-  const { userId } = req.params;
-  const folderPath = path.join(__dirname, '..', 'assets', userId);
+// ─── GET /api/avatars/:userId ─────────────────────────────────────────────────
+router.get('/:userId', (req, res) => {
+  const { userId }  = req.params;
+  const folderPath  = path.join(__dirname, '..', 'assets', userId);
 
   if (!fs.existsSync(folderPath)) {
     return res.status(404).json({ error: 'No avatars found for this user' });
   }
 
-  const files = fs.readdirSync(folderPath);
+  const files   = fs.readdirSync(folderPath);
   const avatars = {};
-
   for (const pose of POSES) {
     const match = files.find(f => f.startsWith(pose));
     if (match) avatars[`${pose}_url`] = `/assets/${userId}/${match}`;
   }
-
   avatars.folder_path = `/assets/${userId}`;
-  res.json({ userId, avatars });
+
+  return res.json({ userId, avatars });
 });
 
 module.exports = router;
