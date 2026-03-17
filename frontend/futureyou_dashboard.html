@@ -503,10 +503,10 @@ body {
     <a class="nav-item" href="futureyou_nps_account.html">
       <div class="nav-dot"></div> My NPS Account
     </a>
-    <a class="nav-item" href="#" onclick="comingSoon(\'Contributions\');return false;">
+    <a class="nav-item" href="#" onclick="comingSoon('Contributions');return false;">
       <div class="nav-dot"></div> Contributions
     </a>
-    <a class="nav-item" href="#" onclick="comingSoon(\'Tax Benefits\');return false;">
+    <a class="nav-item" href="#" onclick="comingSoon('Tax Benefits');return false;">
       <div class="nav-dot"></div> Tax Benefits
     </a>
 
@@ -517,15 +517,15 @@ body {
     <a class="nav-item" href="#">
       <div class="nav-dot"></div> Talk to Future Self
     </a>
-    <a class="nav-item" href="#" onclick="comingSoon(\'FAQ\');return false;">
+    <a class="nav-item" href="#" onclick="comingSoon('FAQ');return false;">
       <div class="nav-dot"></div> FAQ
     </a>
 
     <div class="nav-label">Account</div>
-    <a class="nav-item" href="#" onclick="comingSoon(\'Complete Profile\');return false;">
+    <a class="nav-item" href="#" onclick="comingSoon('Complete Profile');return false;">
       <div class="nav-dot"></div> Complete Profile
     </a>
-    <a class="nav-item" href="#" onclick="comingSoon(\'Settings\');return false;">
+    <a class="nav-item" href="#" onclick="comingSoon('Settings');return false;">
       <div class="nav-dot"></div> Settings
     </a>
   </nav>
@@ -863,7 +863,7 @@ const BENEFIT_RULES = [
 // USER DATA — pulled from localStorage (set by visual novel)
 // Falls back to demo data if not logged in
 // ══════════════════════════════════════════════════════════════════
-const API_BASE = 'http://localhost:5000';
+const API_BASE = '';
 
 async function loadUserData() {
   const token = localStorage.getItem('futureyou_token');
