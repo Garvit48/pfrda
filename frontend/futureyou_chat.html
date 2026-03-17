@@ -151,6 +151,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 .send-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
 .send-btn svg{width:16px;height:16px;}
 
+/* Provider badge */
+.provider-badge{
+  position:absolute;top:12px;right:16px;
+  font-size:10px;font-weight:500;letter-spacing:0.06em;
+  padding:4px 8px;border-radius:20px;
+  background:rgba(255,255,255,0.1);
+  color:rgba(255,255,255,0.5);
+  z-index:4;
+  display:flex;align-items:center;gap:5px;
+}
+.provider-dot{width:6px;height:6px;border-radius:50%;background:#4ade80;}
+.provider-dot.fallback{background:#f59e0b;}
+
 @media(max-width:768px){
   .sidebar{display:none;} .main{margin-left:0;}
   .avatar-wrap{bottom:230px;}
@@ -196,6 +209,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
   <div class="scene-area">
     <div class="scene-bg" id="scene-bg"></div>
 
+    <!-- Provider indicator -->
+    <div class="provider-badge" id="provider-badge" style="display:none;">
+      <div class="provider-dot" id="provider-dot"></div>
+      <span id="provider-label">—</span>
+    </div>
+
     <div class="avatar-wrap" id="avatar-wrap">
       <img id="avatar-img" src="" alt="Future You"/>
     </div>
@@ -231,20 +250,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 <script>
 // ══════════════════════════════════════════════════════════════
 // LLM CONFIGURATION
-// Swap these values when you have a real API key and endpoint.
-// Supported: any OpenAI-compatible API (OpenAI, Together, Groq,
-// Anthropic via proxy, Ollama local, etc.)
+//
+//  PRIMARY  Hugging Face Router API  (FREE — HF token required)
+//           Endpoint: router.huggingface.co (OpenAI-compatible)
+//           Model:    meta-llama/Llama-3.1-8B-Instruct
+//
+//  FALLBACK Built-in NPS knowledge base  (ALWAYS WORKS)
 // ══════════════════════════════════════════════════════════════
 const LLM_CONFIG = {
-  enabled:  false,                         // ← set to true when key is ready
-  url:      'https://api.openai.com/v1/chat/completions',
-  apiKey:   'YOUR_API_KEY_HERE',
-  model:    'gpt-4o-mini',                 // swap for any model
-  maxTokens: 300,
+  enabled:     true,                 // ← set true and add your token
+  url:         'https://router.huggingface.co/v1/chat/completions',
+  token:       'YOUR_HF_TOKEN_HERE',  // hf_xxxxxxxxxxxxxxxxxxxx
+  model:       'meta-llama/Llama-3.1-8B-Instruct',
+  maxTokens:   300,
+  temperature: 0.3,
 };
 // ══════════════════════════════════════════════════════════════
 
-// ── Avatar pose images (same keys as visual novel) ──────────
+// ── Avatar pose images ────────────────────────────────────────
 const AVATAR_POSES = {
   shocked:  'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&q=80',
   talking:  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80',
@@ -259,7 +282,20 @@ const BACKGROUNDS = {
   study:    'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=1200&q=80',
 };
 
-// ── Fallback responses when LLM is unavailable ───────────────
+// ── TIER 4: Built-in NPS knowledge base ──────────────────────
+// Mirrors the NPS_KB from aiCoachService.js exactly
+const NPS_KB = {
+  'what is nps':   "NPS — National Pension System — is a government-backed retirement savings scheme regulated by PFRDA. You invest monthly, it grows through market-linked funds. At 60 you withdraw 60% tax-free and use 40% to buy an annuity for monthly income.",
+  'tax benefit':   "NPS gives up to ₹2 lakh in annual deductions — ₹1.5L under 80C and an exclusive ₹50K under 80CCD(1B). For a 30% bracket earner that's ₹62,400 saved every single year. I wish I'd started earlier.",
+  'withdraw':      "At 60, withdraw up to 60% tax-free. The remaining 40% buys an annuity for monthly income. Partial withdrawals — 25% of your contributions — are allowed after 3 years for education, medical emergencies, or a home purchase.",
+  'pran':          "Your PRAN is your Permanent Retirement Account Number — a unique 12-digit identity that stays with you for life, across all employers and cities. Find it on your NPS statement or the eNPS portal.",
+  'tier':          "Tier I is your main pension account — tax benefits, but restricted withdrawals. Tier II is voluntary and flexible, but generally no tax benefits. Most people focus on Tier I and that's the right call.",
+  'asset class':   "NPS has three asset classes: E for equity growth, C for corporate bond stability, and G for government securities safety. When I was young I put more into E — time was on my side. It paid off.",
+  'how to invest': "Start at enps.nsdl.com, choose a Pension Fund Manager, set your asset allocation, and begin a monthly SIP. Even ₹500 a month at your age compounds into something real by 60. I promise.",
+  'annuity':       "An annuity converts your lump sum into regular monthly income. At 60, at least 40% of your NPS corpus must go toward an annuity from a PFRDA-empanelled insurer.",
+  'default':       "Good question. Ask me about NPS tax benefits, how to get started, withdrawal rules, PRAN, or asset allocation. For official details, always verify at pfrda.org.in.",
+};
+
 const FALLBACK_RESPONSES = [
   "Not right now. Some other time, maybe.",
   "I'm tired today. Ask me again later.",
@@ -275,11 +311,11 @@ const user = (() => {
   try { return JSON.parse(localStorage.getItem('futureyou_user') || '{}'); } catch { return {}; }
 })();
 
-const userName    = user?.name?.split(' ')[0] || 'junior';
-const userAge     = user?.age || 25;
-const userIncome  = user?.employment?.income_range || 'moderate income';
-const npsStatus   = user?.onboarding?.nps_knowledge_level || 'heard';
-const retireAge   = user?.goals?.retirement_age_target || 60;
+const userName   = user?.name?.split(' ')[0] || 'junior';
+const userAge    = user?.age || 25;
+const userIncome = user?.employment?.income_range || 'moderate income';
+const npsStatus  = user?.onboarding?.nps_knowledge_level || 'heard';
+const retireAge  = user?.goals?.retirement_age_target || 60;
 
 // Load real avatar paths if they were generated
 if (user?.avatars?.shocked_url)  AVATAR_POSES.shocked  = `http://localhost:5000${user.avatars.shocked_url}`;
@@ -287,8 +323,14 @@ if (user?.avatars?.talking_url)  AVATAR_POSES.talking  = `http://localhost:5000$
 if (user?.avatars?.thinking_url) AVATAR_POSES.thinking = `http://localhost:5000${user.avatars.thinking_url}`;
 if (user?.avatars?.smiling_url)  AVATAR_POSES.smiling  = `http://localhost:5000${user.avatars.smiling_url}`;
 
-// ── System prompt built from user data ───────────────────────
+// ── System prompt (matches aiCoachService.js exactly) ─────────
 function buildSystemPrompt() {
+  const npsDesc = npsStatus === 'active'
+    ? 'already contributing to NPS'
+    : npsStatus === 'heard'
+    ? 'heard of NPS but never acted'
+    : 'barely aware of NPS';
+
   return `You are the 60-year-old future version of ${userName}, speaking to your younger self who is currently ${userAge} years old.
 
 You lived the life that ${userName} is about to live. You remember being their age — the uncertainty, the spending habits, the things you wish someone had told you about saving for retirement.
@@ -296,38 +338,30 @@ You lived the life that ${userName} is about to live. You remember being their a
 Key facts about ${userName}'s current situation that you remember:
 - They are ${userAge} years old
 - Income range: ${userIncome}
-- NPS knowledge level: ${npsStatus === 'active' ? 'already contributing to NPS' : npsStatus === 'heard' ? 'heard of NPS but never acted' : 'barely aware of NPS'}
+- NPS knowledge level: ${npsDesc}
 - Target retirement age: ${retireAge}
 
-Your personality:
-- Warm but direct — you don't sugarcoat things
-- Occasionally nostalgic — you remember specific feelings from being young
-- You speak about NPS and retirement planning from lived experience, not textbooks
-- You reference real NPS facts naturally in conversation (Section 80CCD(1B), PRAN, tier structure, fund managers, partial withdrawal rules, etc.)
-- You are NOT a chatbot. You are a human. Speak like one — short sentences, occasional pauses, natural language
-- Never use bullet points or lists in your replies. Always flowing natural speech
-- Keep replies to 2-4 sentences maximum. Conversational, not lecture-like
-- Occasionally use light humour or gentle teasing — you know this person better than anyone`;
+Rules:
+1. Speak in FIRST PERSON as their future self. Say "I did this", "When I was your age", "Trust me on this". Never say you are an AI or a bot.
+2. Keep replies to 2-4 sentences maximum. Conversational, not lecture-like.
+3. No bullet points or lists. Always flowing natural speech.
+4. Warm but direct — you don't sugarcoat things. Occasionally nostalgic.
+5. Reference real NPS facts naturally — Section 80CCD(1B), PRAN, tier structure, fund managers, partial withdrawal rules.
+6. Do NOT invent numbers or regulations. If unsure, say "please verify at pfrda.org.in".
+7. Occasionally use light humour or gentle teasing — you know this person better than anyone.`;
 }
 
 // ── State ─────────────────────────────────────────────────────
 let conversationHistory = [];
-let currentPose = 'smiling';
 let isFetching = false;
 
 // ── Init ──────────────────────────────────────────────────────
 function init() {
-  // Sidebar
   document.getElementById('sidebar-name').textContent = user?.name || 'You';
   document.getElementById('sidebar-avatar').textContent = (user?.name || 'U')[0].toUpperCase();
-
-  // Background
   document.getElementById('scene-bg').style.backgroundImage = `url('${BACKGROUNDS.dim_room}')`;
-
-  // Set avatar
   setAvatar('smiling', false);
 
-  // Opening line
   const openers = [
     `You summoned me, ${userName}? Ha. I remember being your age — full of energy and very little savings. What do you want to know?`,
     `${userName}. It's good to see you, kid. I was wondering when you'd reach out. Ask me anything.`,
@@ -341,16 +375,11 @@ function init() {
 
 // ── Avatar control ────────────────────────────────────────────
 function setAvatar(pose, animate = true) {
-  currentPose = pose;
-  const img = document.getElementById('avatar-img');
+  const img  = document.getElementById('avatar-img');
   const wrap = document.getElementById('avatar-wrap');
-
   if (animate) {
     wrap.style.opacity = '0';
-    setTimeout(() => {
-      img.src = AVATAR_POSES[pose];
-      wrap.style.opacity = '1';
-    }, 200);
+    setTimeout(() => { img.src = AVATAR_POSES[pose]; wrap.style.opacity = '1'; }, 200);
   } else {
     img.src = AVATAR_POSES[pose];
     wrap.style.opacity = '1';
@@ -361,10 +390,29 @@ function setBackground(bgKey) {
   document.getElementById('scene-bg').style.backgroundImage = `url('${BACKGROUNDS[bgKey]}')`;
 }
 
-// ── Messages ─────────────────────────────────────────────────
+// ── Provider badge ────────────────────────────────────────────
+function showProviderBadge(provider) {
+  const badge = document.getElementById('provider-badge');
+  const dot   = document.getElementById('provider-dot');
+  const label = document.getElementById('provider-label');
+
+  const labels = {
+    huggingface:    'Llama 3.1 · HF Router',
+    cohere:         'Cohere · command-light',
+    openai:         'GPT-4o mini · OpenAI',
+    knowledge_base: 'Knowledge Base',
+  };
+  const isLive = provider !== 'knowledge_base';
+
+  badge.style.display = 'flex';
+  dot.className = 'provider-dot' + (isLive ? '' : ' fallback');
+  label.textContent = labels[provider] || provider;
+}
+
+// ── Messages ──────────────────────────────────────────────────
 function addMessage(from, text) {
   const msgs = document.getElementById('messages');
-  const div = document.createElement('div');
+  const div  = document.createElement('div');
   div.className = `msg ${from === 'user' ? 'user' : 'future'}`;
   div.innerHTML = `
     <div class="msg-from">${from === 'user' ? userName : 'Future You'}</div>
@@ -374,12 +422,11 @@ function addMessage(from, text) {
   msgs.scrollTop = msgs.scrollHeight;
 }
 
-// ── Typing indicator ─────────────────────────────────────────
+// ── Typing indicator ──────────────────────────────────────────
 function showTyping(show) {
   document.getElementById('typing-dots').className = 'typing-dots' + (show ? ' show' : '');
   if (show) {
     setAvatar('thinking');
-    // Occasionally switch background while thinking
     const bgs = ['window', 'study', 'garden', 'dim_room'];
     setBackground(bgs[Math.floor(Math.random() * bgs.length)]);
   }
@@ -389,7 +436,6 @@ function showTyping(show) {
 function handleKey(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 }
-
 function autoResize(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 80) + 'px';
@@ -412,13 +458,14 @@ async function sendMessage() {
 
   setTimeout(() => { showTyping(true); }, 300);
 
-  const reply = await fetchLLMResponse(text);
+  const { reply, provider } = await fetchLLMResponse(text);
 
   showTyping(false);
   addMessage('future', reply);
   conversationHistory.push({ role: 'assistant', content: reply });
+  showProviderBadge(provider);
 
-  // Pick pose based on reply sentiment (simple heuristic)
+  // Pose heuristic
   const lower = reply.toLowerCase();
   if (lower.includes('!') || lower.includes('great') || lower.includes('good')) setAvatar('smiling');
   else if (lower.includes('?') || lower.includes('wonder') || lower.includes('think')) setAvatar('thinking');
@@ -429,43 +476,60 @@ async function sendMessage() {
   isFetching = false;
 }
 
-// ── LLM call ──────────────────────────────────────────────────
-async function fetchLLMResponse(userMessage) {
-  if (!LLM_CONFIG.enabled || !LLM_CONFIG.apiKey || LLM_CONFIG.apiKey === 'YOUR_API_KEY_HERE') {
-    return getFallback();
-  }
-
-  try {
-    const res = await fetch(LLM_CONFIG.url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${LLM_CONFIG.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: LLM_CONFIG.model,
-        max_tokens: LLM_CONFIG.maxTokens,
-        messages: [
-          { role: 'system', content: buildSystemPrompt() },
-          ...conversationHistory.slice(-10), // last 10 messages for context
-        ],
-      }),
-    });
-
-    if (!res.ok) return getFallback();
-
-    const data = await res.json();
-    const reply = data?.choices?.[0]?.message?.content?.trim();
-    return reply || getFallback();
-
-  } catch (err) {
-    console.warn('LLM unavailable:', err.message);
-    return getFallback();
-  }
+// ══════════════════════════════════════════════════════════════
+// PRIMARY — HUGGING FACE ROUTER (OpenAI-compatible)
+// Model: meta-llama/Llama-3.1-8B-Instruct
+// ══════════════════════════════════════════════════════════════
+async function callHuggingFace() {
+  const res = await fetch(LLM_CONFIG.url, {
+    method: 'POST',
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': `Bearer ${LLM_CONFIG.token}`,
+    },
+    body: JSON.stringify({
+      model:       LLM_CONFIG.model,
+      max_tokens:  LLM_CONFIG.maxTokens,
+      temperature: LLM_CONFIG.temperature,
+      stream:      false,
+      messages: [
+        { role: 'system', content: buildSystemPrompt() },
+        ...conversationHistory.slice(-10),
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`HF ${res.status}`);
+  const data = await res.json();
+  const text = data?.choices?.[0]?.message?.content?.trim();
+  if (!text || text.length < 5) throw new Error('HF empty response');
+  return text;
 }
 
-function getFallback() {
-  return FALLBACK_RESPONSES[Math.floor(Math.random() * FALLBACK_RESPONSES.length)];
+// ══════════════════════════════════════════════════════════════
+// FALLBACK — BUILT-IN NPS KNOWLEDGE BASE (always works)
+// ══════════════════════════════════════════════════════════════
+function knowledgeBaseAnswer(question) {
+  const lower = question.toLowerCase();
+  for (const [key, val] of Object.entries(NPS_KB)) {
+    if (key !== 'default' && lower.includes(key)) return val;
+  }
+  return NPS_KB.default;
+}
+
+// ══════════════════════════════════════════════════════════════
+// ORCHESTRATOR
+// ══════════════════════════════════════════════════════════════
+async function fetchLLMResponse(question) {
+  if (LLM_CONFIG.enabled && LLM_CONFIG.token !== 'YOUR_HF_TOKEN_HERE') {
+    try {
+      console.log('[Coach] Trying HF Router (Llama 3.1-8B)...');
+      const reply = await callHuggingFace();
+      return { reply, provider: 'huggingface' };
+    } catch (e) { console.warn('[Coach] HF failed:', e.message); }
+  }
+
+  console.log('[Coach] Using knowledge base');
+  return { reply: knowledgeBaseAnswer(question), provider: 'knowledge_base' };
 }
 
 init();
