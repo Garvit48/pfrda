@@ -431,13 +431,12 @@
         // ══════════════════════════════════════════════════════════
         const API_BASE = 'http://localhost:5000';
 
-        // Fallback Unsplash avatars used when generation fails/is disabled
-        const FALLBACK_POSES = {
-            shocked:  'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&q=80',
-            talking:  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80',
-            thinking: 'https://images.unsplash.com/photo-1584744982491-665216d95f8b?w=400&q=80',
-            smiling:  'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&q=80',
-        };
+        // Fallback Unsplash avatars — written into AVATAR_POSES already
+        // declared by futureyou_script.js (must NOT redeclare with const)
+        AVATAR_POSES.shocked  = 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&q=80';
+        AVATAR_POSES.talking  = 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80';
+        AVATAR_POSES.thinking = 'https://images.unsplash.com/photo-1584744982491-665216d95f8b?w=400&q=80';
+        AVATAR_POSES.smiling  = 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&q=80';
 
         // ── State ────────────────────────────────────────────────
         const userData = {};
@@ -448,9 +447,6 @@
         let current = 0;
         let isTransitioning = false;
         let inputAnswered = false;
-
-        // AVATAR_POSES is used by the novel engine — starts as fallbacks
-        const AVATAR_POSES = { ...FALLBACK_POSES };
 
         // ── Readiness score ──────────────────────────────────────
         function computeReadinessScore(d) {
@@ -472,20 +468,20 @@
         // PHOTO UPLOAD & DRAG-DROP
         // ══════════════════════════════════════════════════════════
 
-        function handleDragOver(e) {
+        window.handleDragOver = function(e) {
             e.preventDefault();
             document.getElementById('photo-upload-area').classList.add('drag-over');
         }
-        function handleDragLeave(e) {
+        window.handleDragLeave = function(e) {
             document.getElementById('photo-upload-area').classList.remove('drag-over');
         }
-        function handleDrop(e) {
+        window.handleDrop = function(e) {
             e.preventDefault();
             document.getElementById('photo-upload-area').classList.remove('drag-over');
             const file = e.dataTransfer.files?.[0];
             if (file && file.type.startsWith('image/')) processFile(file);
         }
-        function handleFileSelect(e) {
+        window.handleFileSelect = function(e) {
             const file = e.target.files?.[0];
             if (file) processFile(file);
         }
